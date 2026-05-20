@@ -181,7 +181,7 @@ export default function App() {
           <div className="text-center mb-24 max-w-4xl mx-auto">
             <FadeIn>
               <h2 className="text-sm font-mono text-indigo-400 tracking-widest uppercase mb-4">The Interaction Paradigm</h2>
-              <h3 className="text-4xl md:text-6xl font-bold mb-6">Spotlight meets Jarvis.</h3>
+              <h3 className="text-4xl md:text-6xl font-bold mb-6">Omnipresent. Never Intrusive.</h3>
               <p className="text-zinc-400 text-xl leading-relaxed">
                 Three layers. One seamless experience. ARIA is designed to disappear, offering a frictionless layer of intelligence resting quietly on top of your OS.
               </p>
