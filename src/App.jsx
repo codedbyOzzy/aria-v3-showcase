@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { ChevronDown, Zap, Shield, Cpu, Layers, Workflow, Terminal, Code2, MoveRight } from 'lucide-react';
+import { ChevronDown, Zap, Shield, Cpu, Layers, Workflow, Terminal, Code2, MoveRight, Link as LinkIcon, FileCode2, Globe, FileText, Sunrise, Calendar, CheckCircle2, Clock } from 'lucide-react';
 
 const FadeIn = ({ children, delay = 0, direction = "up", className = "" }) => {
   const directions = {
@@ -30,11 +30,11 @@ export default function App() {
   const smoothProgress = useSpring(scrollYProgress, { damping: 20, stiffness: 100 });
   
   // Parallax values
-  const yHero = useTransform(smoothProgress, [0, 0.2], [0, 150]);
-  const opacityHero = useTransform(smoothProgress, [0, 0.15], [1, 0]);
+  const yHero = useTransform(smoothProgress, [0, 0.15], [0, 150]);
+  const opacityHero = useTransform(smoothProgress, [0, 0.1], [1, 0]);
   
-  const yImage1 = useTransform(smoothProgress, [0.3, 0.6], [100, -100]);
-  const yImage2 = useTransform(smoothProgress, [0.4, 0.7], [150, -150]);
+  const yImage1 = useTransform(smoothProgress, [0.15, 0.4], [100, -100]);
+  const yImage2 = useTransform(smoothProgress, [0.2, 0.5], [150, -150]);
 
   return (
     <div ref={containerRef} className="bg-zinc-950 min-h-screen text-zinc-50 font-sans selection:bg-indigo-500/30 overflow-hidden relative">
@@ -62,7 +62,7 @@ export default function App() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex flex-col items-center justify-center px-4 pt-20 z-10">
+      <section className="relative h-[100vh] flex flex-col items-center justify-center px-4 pt-20 z-10">
         <motion.div 
           style={{ y: yHero, opacity: opacityHero }}
           className="text-center max-w-5xl mx-auto relative"
@@ -178,24 +178,50 @@ export default function App() {
         </div>
       </section>
 
-      {/* Interface Showcase - Parallax Images */}
+      {/* The Interaction Paradigm & UI Showcase */}
       <section className="py-32 px-6 relative z-10 border-y border-white/5 bg-black/40">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24">
+          <div className="text-center mb-24 max-w-4xl mx-auto">
             <FadeIn>
-              <h2 className="text-sm font-mono text-indigo-400 tracking-widest uppercase mb-4">Arc / Linear Aesthetic</h2>
-              <h3 className="text-4xl md:text-6xl font-bold mb-6">Designed to Disappear</h3>
-              <p className="text-zinc-400 text-xl max-w-2xl mx-auto">
-                No tabs. No browser windows. Just a frictionless layer of intelligence resting on top of your OS.
+              <h2 className="text-sm font-mono text-indigo-400 tracking-widest uppercase mb-4">The Interaction Paradigm</h2>
+              <h3 className="text-4xl md:text-6xl font-bold mb-6">Spotlight meets Jarvis.</h3>
+              <p className="text-zinc-400 text-xl leading-relaxed">
+                Three layers. One seamless experience. ARIA is designed to disappear, offering a frictionless layer of intelligence resting quietly on top of your OS.
               </p>
             </FadeIn>
           </div>
 
-          <div className="relative h-[800px] flex items-center justify-center">
+          <div className="grid md:grid-cols-3 gap-8 mb-24 relative z-40">
+            <FadeIn delay={0.1} className="glass p-6 rounded-2xl text-center">
+              <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4 border border-zinc-700">
+                <div className="w-3 h-3 rounded-full bg-white" />
+              </div>
+              <h4 className="font-bold mb-2">Ambient Mode</h4>
+              <p className="text-sm text-zinc-400">Resting in your system tray. Constantly aware, quietly processing background tasks.</p>
+            </FadeIn>
+            
+            <FadeIn delay={0.2} className="glass p-6 rounded-2xl text-center border-indigo-500/30 glow-indigo-sm">
+              <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center mx-auto mb-4 border border-indigo-500/50">
+                <div className="font-mono text-xs text-indigo-300">Alt+Space</div>
+              </div>
+              <h4 className="font-bold mb-2">Bar Mode</h4>
+              <p className="text-sm text-zinc-400">Instant access. Fast queries, quick actions, zero friction. Appears instantly on command.</p>
+            </FadeIn>
+
+            <FadeIn delay={0.3} className="glass p-6 rounded-2xl text-center">
+              <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4 border border-zinc-700">
+                <div className="font-mono text-xs text-zinc-300">Tab</div>
+              </div>
+              <h4 className="font-bold mb-2">Panel Mode</h4>
+              <p className="text-sm text-zinc-400">Expands for deep work. Access your daily brief, manage background tasks, and review persistent chat history.</p>
+            </FadeIn>
+          </div>
+
+          <div className="relative h-[900px] flex items-center justify-center -mt-20">
             {/* Panel Mode Image */}
             <motion.div 
               style={{ y: yImage1 }}
-              className="absolute left-0 md:left-[10%] top-20 z-20 w-full max-w-[400px]"
+              className="absolute left-0 md:left-[5%] top-40 z-20 w-full max-w-[450px]"
             >
               <FadeIn direction="right">
                 <div className="rounded-2xl overflow-hidden border border-white/10 glow-indigo shadow-2xl">
@@ -207,7 +233,7 @@ export default function App() {
             {/* Bar Mode Image */}
             <motion.div 
               style={{ y: yImage2 }}
-              className="absolute right-0 md:right-[5%] bottom-20 z-30 w-full max-w-[600px]"
+              className="absolute right-0 md:right-[5%] bottom-40 z-30 w-full max-w-[650px]"
             >
               <FadeIn direction="left" delay={0.2}>
                 <div className="rounded-2xl overflow-hidden border border-white/10 glow-indigo shadow-2xl">
@@ -219,11 +245,72 @@ export default function App() {
         </div>
       </section>
 
-      {/* Bento Grid - The 7 Stones Harmonized */}
+      {/* Context-Aware Intelligence */}
       <section className="py-32 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            
+            <div>
+              <FadeIn>
+                <h2 className="text-sm font-mono text-indigo-400 tracking-widest uppercase mb-4">Clipboard Intelligence</h2>
+                <h3 className="text-4xl md:text-5xl font-bold mb-6">Context-Aware Action Chips</h3>
+                <p className="text-zinc-400 text-lg leading-relaxed mb-8">
+                  ARIA monitors your clipboard silently. When you hit <code className="bg-zinc-900 px-2 py-1 rounded border border-zinc-800">Alt+Space</code>, it already knows what you're looking at and suggests instant actions. No typing required.
+                </p>
+              </FadeIn>
+            </div>
+
+            <div className="space-y-6">
+              <FadeIn delay={0.1} className="glass p-6 rounded-2xl flex items-center gap-6">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 shrink-0">
+                  <LinkIcon className="w-5 h-5 text-zinc-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-zinc-500 mb-2">URL in Clipboard</div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs rounded-full cursor-pointer hover:bg-indigo-500/30 transition-colors">🔗 Summarize</span>
+                    <span className="px-3 py-1 bg-white/5 border border-white/10 text-zinc-300 text-xs rounded-full cursor-pointer hover:bg-white/10 transition-colors">🔍 Research</span>
+                  </div>
+                </div>
+              </FadeIn>
+
+              <FadeIn delay={0.2} className="glass p-6 rounded-2xl flex items-center gap-6">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 shrink-0">
+                  <FileCode2 className="w-5 h-5 text-zinc-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-zinc-500 mb-2">Code in Clipboard</div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs rounded-full cursor-pointer hover:bg-indigo-500/30 transition-colors">🐛 Debug</span>
+                    <span className="px-3 py-1 bg-white/5 border border-white/10 text-zinc-300 text-xs rounded-full cursor-pointer hover:bg-white/10 transition-colors">📖 Explain</span>
+                    <span className="px-3 py-1 bg-white/5 border border-white/10 text-zinc-300 text-xs rounded-full cursor-pointer hover:bg-white/10 transition-colors">✨ Improve</span>
+                  </div>
+                </div>
+              </FadeIn>
+
+              <FadeIn delay={0.3} className="glass p-6 rounded-2xl flex items-center gap-6">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 shrink-0">
+                  <FileText className="w-5 h-5 text-zinc-400" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-zinc-500 mb-2">Text in Clipboard</div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs rounded-full cursor-pointer hover:bg-indigo-500/30 transition-colors">📝 Rewrite</span>
+                    <span className="px-3 py-1 bg-white/5 border border-white/10 text-zinc-300 text-xs rounded-full cursor-pointer hover:bg-white/10 transition-colors">🌍 Translate</span>
+                  </div>
+                </div>
+              </FadeIn>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Bento Grid - The 7 Stones Harmonized */}
+      <section className="py-32 px-6 relative z-10 bg-zinc-950/50">
+        <div className="max-w-7xl mx-auto">
           <FadeIn>
-            <h2 className="text-4xl md:text-5xl font-bold mb-16">The 7 Stones, Harmonized.</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">The Capabilities Matrix.</h2>
           </FadeIn>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -239,15 +326,15 @@ export default function App() {
               <Workflow className="w-10 h-10 text-indigo-400 mb-6" />
               <h3 className="text-xl font-bold mb-3 text-white">Desktop Control</h3>
               <p className="text-zinc-400">
-                Not a web wrapper. Native integration to control apps, read local files, and automate workflows seamlessly.
+                Native integration to control apps, read local files, and automate workflows seamlessly.
               </p>
             </FadeIn>
 
             <FadeIn delay={0.3} className="glass p-8 rounded-2xl h-full">
-              <Cpu className="w-10 h-10 text-indigo-400 mb-6" />
-              <h3 className="text-xl font-bold mb-3 text-white">THE ARC</h3>
+              <Sunrise className="w-10 h-10 text-indigo-400 mb-6" />
+              <h3 className="text-xl font-bold mb-3 text-white">Morning Briefings</h3>
               <p className="text-zinc-400">
-                Persistent narrative memory. ARIA remembers your projects, your preferences, and context from 3 months ago.
+                Automated context. Every morning, ARIA analyzes your calendar, emails, and past tasks to deliver a perfect daily brief.
               </p>
             </FadeIn>
 
@@ -255,12 +342,72 @@ export default function App() {
               <Terminal className="w-10 h-10 text-indigo-400 mb-6 relative z-10" />
               <h3 className="text-2xl font-bold mb-3 text-white relative z-10">Streaming Acoustic Feedback</h3>
               <p className="text-zinc-400 text-lg relative z-10 max-w-xl">
-                We eliminated the silence. Neural Text-to-Speech now operates on a sentence-by-sentence streaming pipeline. As the UI renders text, the voice speaks instantly.
+                We eliminated the silence. Neural Text-to-Speech operates on a sentence-by-sentence pipeline. As the UI renders text, the voice speaks instantly.
               </p>
               <div className="absolute -right-10 -bottom-10 opacity-5">
                 <Zap className="w-64 h-64 text-indigo-500" />
               </div>
             </FadeIn>
+          </div>
+        </div>
+      </section>
+
+      {/* The Point of No Return */}
+      <section className="py-32 px-6 relative z-10 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <FadeIn>
+              <h2 className="text-sm font-mono text-indigo-400 tracking-widest uppercase mb-4">Metrics of Success</h2>
+              <h3 className="text-4xl md:text-5xl font-bold">The Path to No Return</h3>
+            </FadeIn>
+          </div>
+
+          <div className="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
+            
+            {/* 30 Seconds */}
+            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-zinc-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                <Clock className="w-4 h-4 text-indigo-400" />
+              </div>
+              <FadeIn className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-6 rounded-2xl">
+                <h4 className="font-bold text-xl mb-2 text-white">The First 30 Seconds</h4>
+                <p className="text-zinc-400">Install the app, enter your API key, hit <code className="text-xs bg-black/50 px-1 rounded">Alt+Space</code>, type "hello". The 1.2-second instant response hooks you immediately.</p>
+              </FadeIn>
+            </div>
+
+            {/* 5 Minutes */}
+            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-zinc-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                <Workflow className="w-4 h-4 text-indigo-400" />
+              </div>
+              <FadeIn delay={0.2} className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-6 rounded-2xl">
+                <h4 className="font-bold text-xl mb-2 text-white">The First 5 Minutes</h4>
+                <p className="text-zinc-400">You drag and drop a file, schedule a background task, and use context chips. The fluidity and animations feel perfectly native.</p>
+              </FadeIn>
+            </div>
+
+            {/* 1 Week */}
+            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-zinc-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                <Calendar className="w-4 h-4 text-indigo-400" />
+              </div>
+              <FadeIn delay={0.3} className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-6 rounded-2xl">
+                <h4 className="font-bold text-xl mb-2 text-white">The First Week</h4>
+                <p className="text-zinc-400">ARIA remembers your name, learns your preferences, and generates flawless morning briefings. You wonder how you lived without it.</p>
+              </FadeIn>
+            </div>
+
+            {/* No Return */}
+            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full border border-indigo-500/50 bg-indigo-500/20 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 glow-indigo-sm">
+                <CheckCircle2 className="w-4 h-4 text-indigo-300" />
+              </div>
+              <FadeIn delay={0.4} className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] gradient-border p-6 rounded-2xl glow-indigo-sm">
+                <h4 className="font-bold text-xl mb-2 text-white">The Point of No Return</h4>
+                <p className="text-zinc-400">You sit at another computer and feel handicapped. The desire for portability begins. ARIA is now indispensable.</p>
+              </FadeIn>
+            </div>
+
           </div>
         </div>
       </section>
