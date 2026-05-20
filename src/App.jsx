@@ -54,9 +54,6 @@ export default function App() {
           </div>
           <div className="flex items-center gap-6 text-sm font-mono text-zinc-400">
             <span className="hidden md:inline-block">v2.0 Cognitive Core</span>
-            <a href="https://github.com/codedbyOzzy/ProjectFridaySynapse" target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
-              GitHub
-            </a>
           </div>
         </div>
       </nav>
@@ -85,7 +82,7 @@ export default function App() {
           <FadeIn delay={0.4}>
             <p className="text-xl md:text-3xl text-zinc-400 font-light max-w-3xl mx-auto leading-relaxed mb-12">
               The era of the assistant is over.<br/>
-              Meet your <span className="text-white font-medium">Personal AI Operating System.</span>
+              <span className="text-white font-medium tracking-wide">MEET ARIA.</span>
             </p>
           </FadeIn>
 
@@ -424,16 +421,16 @@ export default function App() {
               Whisper your intent. Let the orchestra handle the rest. Welcome to the future of personal computing.
             </p>
             
-            <a href="https://github.com/codedbyOzzy/ProjectFridaySynapse" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all duration-300 hover:scale-105 hover:glow-indigo">
-              Explore the Architecture
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all duration-300 hover:scale-105 hover:glow-indigo">
+              Experience the Future
               <MoveRight className="w-5 h-5" />
-            </a>
+            </button>
           </FadeIn>
         </div>
       </section>
 
       <footer className="py-8 text-center text-zinc-600 text-sm border-t border-white/5 font-mono">
-        <p>Built for the future by Ozzy. 2026</p>
+        <p>Built for the future by Synapse Labs. 2026</p>
       </footer>
     </div>
   );
