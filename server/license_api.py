@@ -46,18 +46,17 @@ except ImportError:
 
 
 # ── HMAC Secret ───────────────────────────────────────────────────────────────────
-# Sunucuda env variable olarak sakla — kaynak koda YAZMA:
-#   Railway / Fly: ARIA_HMAC_SECRET ortam değişkeni olarak ayarla
-# Aşağıdaki fallback SADECE local geliştirme için:
+# Client ve server AYNI _build_secret() fonksiyonunu kullanır.
+# Binary data olduğu için env var ile taşınamaz — kod içinde tutulur.
 
 def _build_secret() -> bytes:
-    """ARIA binary ile aynı secret üretim mantığı."""
+    """ARIA binary ile birebir aynı secret — XOR + split obfuscation."""
     parts   = [b"ARIA_LIC", b"_SECRET_", b"CODEDBYOZ", b"ZY_2025_K"]
     xor_key = 0x4F
     raw     = b"".join(parts)
     return bytes(b ^ xor_key for b in raw)
 
-HMAC_SECRET: bytes = os.getenv("ARIA_HMAC_SECRET", "").encode() or _build_secret()
+HMAC_SECRET: bytes = _build_secret()
 
 # Admin API anahtarı — /admin/* erişimi için
 # ÖNEMLİ: Deploy öncesi güçlü bir değerle değiştir ve ortam değişkeni olarak ayarla
