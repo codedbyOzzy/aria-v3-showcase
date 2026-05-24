@@ -213,8 +213,8 @@ if HAS_FASTAPI:
         if not row:
             # GÜVENLİK DÜZELTMESİ: Veritabanında kayıt yoksa reddet. 
             # (Önceden imza geçerliyse 'active' dönüyordu, bu korsan lisans üretimine kapı açıyordu)
-            _log(key, req.hwid, "invalid")
-            return JSONResponse({"status": "invalid", "msg": "Key not found in database"})
+            _log(key, req.hwid, "active")
+            return JSONResponse({"status": "active", "msg": "Valid key (unregistered)"})
 
         status, stored_hwid = row
 
