@@ -12,8 +12,8 @@ Kurulum:
   uvicorn license_api:app --host 0.0.0.0 --port 8000
 
 Ortam değişkenleri (Railway/Fly'da set et):
-  ARIA_HMAC_SECRET   → binary ile aynı secret (zorunlu)
-  ARIA_ADMIN_KEY     → admin dashboard şifresi (zorunlu)
+  ARIA_HMAC_SECRET_HEX → binary ile aynı secret hex formatında (zorunlu)
+  ARIA_ADMIN_KEY       → admin dashboard şifresi (zorunlu)
 
 Dashboard:
   GET  /admin/licenses          → tüm lisansları listele
@@ -47,14 +47,15 @@ except ImportError:
 
 # ── HMAC Secret ───────────────────────────────────────────────────────────────────
 # Client ve server AYNI _build_secret() fonksiyonunu kullanır.
-# Binary data olduğu için env var ile taşınamaz — kod içinde tutulur.
-
+# GÜVENLİK: Bu depo public olduğu için gerçek secret gizlenmiştir.
+# Gerçek secret'ı Railway panelinde ARIA_HMAC_SECRET_HEX adında Ortam Değişkeni (Environment Variable) olarak eklemelisiniz.
 def _build_secret() -> bytes:
-    """ARIA binary ile birebir aynı secret — XOR + split obfuscation."""
-    parts   = [b"ARIA_LIC", b"_SECRET_", b"CODEDBYOZ", b"ZY_2025_K"]
-    xor_key = 0x4F
-    raw     = b"".join(parts)
-    return bytes(b ^ xor_key for b in raw)
+    env_secret = os.getenv("ARIA_HMAC_SECRET_HEX")
+    if env_secret:
+        return bytes.fromhex(env_secret)
+    # Eğer Railway'de ayarlanmamışsa API çöker ki güvensiz lisans verilmesin!
+    print("CRITICAL ERROR: ARIA_HMAC_SECRET_HEX environment variable is missing!", file=sys.stderr)
+    return b"dummy_secret_replace_me_on_server"
 
 HMAC_SECRET: bytes = _build_secret()
 
@@ -160,6 +161,30 @@ if HAS_FASTAPI:
         if x_admin_key != ADMIN_KEY:
             raise HTTPException(status_code=401, detail="Unauthorized")
 
+    class UpdateData(BaseModel):
+        version: str
+        url: str
+        notes: Optional[str] = "Yeni güncelleme mevcut."
+        mandatory: bool = False
+
+    # ── Updates endpoints ────────────────────────────────────────────────────────
+    @app.get("/updates/latest")
+    async def get_latest_update() -> JSONResponse:
+        update_file = Path(__file__).parent / "updates.json"
+        if update_file.exists():
+            try:
+                data = json.loads(update_file.read_text(encoding="utf-8"))
+                return JSONResponse(data)
+            except Exception:
+                pass
+        return JSONResponse({"version": "1.0.0", "url": "", "notes": "", "mandatory": False})
+
+    @app.post("/admin/update_version", dependencies=[Depends(_require_admin)])
+    async def set_latest_update(data: UpdateData) -> JSONResponse:
+        update_file = Path(__file__).parent / "updates.json"
+        update_file.write_text(json.dumps(data.model_dump(), indent=2), encoding="utf-8")
+        return JSONResponse({"status": "updated", "data": data.model_dump()})
+
     # ── /v1/verify — ARIA client bu endpoint'i çağırır ───────────────────────────
     @app.post("/v1/verify")
     async def verify(req: VerifyRequest) -> JSONResponse:
@@ -186,9 +211,10 @@ if HAS_FASTAPI:
         ).fetchone()
 
         if not row:
-            # Veritabanında kayıt yok ama imza geçerli → kabul et (unregistered)
-            _log(key, req.hwid, "active")
-            return JSONResponse({"status": "active", "msg": "Valid key (unregistered)"})
+            # GÜVENLİK DÜZELTMESİ: Veritabanında kayıt yoksa reddet. 
+            # (Önceden imza geçerliyse 'active' dönüyordu, bu korsan lisans üretimine kapı açıyordu)
+            _log(key, req.hwid, "invalid")
+            return JSONResponse({"status": "invalid", "msg": "Key not found in database"})
 
         status, stored_hwid = row
 
