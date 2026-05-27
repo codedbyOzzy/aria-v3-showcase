@@ -12,8 +12,8 @@ Kurulum:
   uvicorn license_api:app --host 0.0.0.0 --port 8000
 
 Ortam değişkenleri (Railway/Fly'da set et):
-  ARIA_HMAC_SECRET_HEX → binary ile aynı secret hex formatında (zorunlu)
-  ARIA_ADMIN_KEY       → admin dashboard şifresi (zorunlu)
+  ARIA_HMAC_SECRET   → binary ile aynı secret (zorunlu)
+  ARIA_ADMIN_KEY     → admin dashboard şifresi (zorunlu)
 
 Dashboard:
   GET  /admin/licenses          → tüm lisansları listele
@@ -31,8 +31,12 @@ import os
 import sqlite3
 import sys
 import time
+import base64
 from pathlib import Path
 from typing import Optional
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
 
 # FastAPI — sadece sunucu tarafında gerekli
 try:
@@ -45,23 +49,35 @@ except ImportError:
     print("FastAPI kurulu değil: pip install fastapi uvicorn")
 
 
-# ── HMAC Secret ───────────────────────────────────────────────────────────────────
-# Client ve server AYNI _build_secret() fonksiyonunu kullanır.
-# GÜVENLİK: Bu depo public olduğu için gerçek secret gizlenmiştir.
-# Gerçek secret'ı Railway panelinde ARIA_HMAC_SECRET_HEX adında Ortam Değişkeni (Environment Variable) olarak eklemelisiniz.
-def _build_secret() -> bytes:
-    env_secret = os.getenv("ARIA_HMAC_SECRET_HEX")
-    if env_secret:
-        return bytes.fromhex(env_secret)
-    # Eğer Railway'de ayarlanmamışsa API çöker ki güvensiz lisans verilmesin!
-    print("CRITICAL ERROR: ARIA_HMAC_SECRET_HEX environment variable is missing!", file=sys.stderr)
-    return b"dummy_secret_replace_me_on_server"
+# ── ECDSA Private Key ─────────────────────────────────────────────────────────────
+# Sadece sunucu tarafında bulunur. Client sadece Public Key'i bilir.
+PRIVATE_KEY_PEM = os.getenv("ARIA_LICENSE_PRIVATE_KEY", "")
 
-HMAC_SECRET: bytes = _build_secret()
+def _get_private_key() -> ec.EllipticCurvePrivateKey:
+    if not PRIVATE_KEY_PEM or PRIVATE_KEY_PEM == "CHANGE_THIS_BEFORE_DEPLOY":
+        # Üretip ekrana bas (ilk kurulum için)
+        print("CRITICAL: ARIA_LICENSE_PRIVATE_KEY is missing! Please configure it in Railway environment variables.")
+        print("Here is a newly generated key for you to use:")
+        priv = ec.generate_private_key(ec.SECP256R1())
+        pem = priv.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        print(pem.decode("utf-8"))
+        raise RuntimeError("Missing ARIA_LICENSE_PRIVATE_KEY")
+    return serialization.load_pem_private_key(PRIVATE_KEY_PEM.encode("utf-8"), password=None)
+
+try:
+    PRIVATE_KEY = _get_private_key()
+except RuntimeError:
+    sys.exit(1)
 
 # Admin API anahtarı — /admin/* erişimi için
 # ÖNEMLİ: Deploy öncesi güçlü bir değerle değiştir ve ortam değişkeni olarak ayarla
-ADMIN_KEY: str = os.getenv("ARIA_ADMIN_KEY", "CHANGE_THIS_BEFORE_DEPLOY")
+ADMIN_KEY: str = os.getenv("ARIA_ADMIN_KEY")
+if not ADMIN_KEY or ADMIN_KEY == "CHANGE_THIS_BEFORE_DEPLOY":
+    raise RuntimeError("CRITICAL: ARIA_ADMIN_KEY is not set or using default value! Do not deploy without it.")
 
 # Veritabanı
 DB_PATH = Path(__file__).parent / "licenses.db"
@@ -99,29 +115,40 @@ def _conn() -> sqlite3.Connection:
 
 
 # ── Yardımcı fonksiyonlar ─────────────────────────────────────────────────────────
-def _make_hmac(payload: str) -> str:
-    return hmac.new(HMAC_SECRET, payload.encode(), hashlib.sha256).hexdigest()[:12]
+def _sign_payload(payload: str) -> str:
+    sig = PRIVATE_KEY.sign(payload.encode("utf-8"), ec.ECDSA(hashes.SHA256()))
+    # URL safe base64 ile encode et, eşittir padding işaretlerini temizle
+    return base64.urlsafe_b64encode(sig).decode("utf-8").rstrip("=")
 
 
 def generate_key(tier: str, user_id: str, expiry_days: int = 30) -> str:
     """
     Yeni lisans key üret.
-    Format: ARIA-{TIER}-{USER_ID}-{EXPIRY_UNIX}-{HMAC12}
+    Format: ARIA-{TIER}-{USER_ID}-{EXPIRY_UNIX}-{SIGNATURE}
     """
     expiry  = int(time.time()) + expiry_days * 86400
     payload = f"ARIA-{tier.upper()}-{user_id}-{expiry}"
-    sig     = _make_hmac(payload)
+    sig     = _sign_payload(payload)
     return f"{payload}-{sig}"
 
 
-def _verify_hmac_server(key: str) -> bool:
-    parts = key.strip().split("-")
+def _verify_signature_server(key: str) -> bool:
+    parts = key.strip().split("-", maxsplit=4)
     if len(parts) < 5 or parts[0] != "ARIA":
         return False
     payload  = "-".join(parts[:4])
-    sig      = parts[4]
-    expected = _make_hmac(payload)
-    return hmac.compare_digest(sig.lower(), expected.lower())
+    sig_b64  = parts[4]
+    
+    # Base64 padding'i geri ekle
+    sig_b64 += "=" * ((4 - len(sig_b64) % 4) % 4)
+    
+    try:
+        sig_bytes = base64.urlsafe_b64decode(sig_b64)
+        public_key = PRIVATE_KEY.public_key()
+        public_key.verify(sig_bytes, payload.encode("utf-8"), ec.ECDSA(hashes.SHA256()))
+        return True
+    except Exception:
+        return False
 
 
 def _log(key: str, hwid: Optional[str], result: str) -> None:
@@ -158,13 +185,15 @@ if HAS_FASTAPI:
         note:        Optional[str] = None
 
     def _require_admin(x_admin_key: str = Header(default="")) -> None:
-        if x_admin_key != ADMIN_KEY:
+        import hmac
+        if not hmac.compare_digest(x_admin_key.encode("utf-8"), ADMIN_KEY.encode("utf-8")):
             raise HTTPException(status_code=401, detail="Unauthorized")
 
     class UpdateData(BaseModel):
         version: str
         url: str
         notes: Optional[str] = "Yeni güncelleme mevcut."
+        sha256: Optional[str] = None
         mandatory: bool = False
 
     # ── Updates endpoints ────────────────────────────────────────────────────────
@@ -190,8 +219,8 @@ if HAS_FASTAPI:
     async def verify(req: VerifyRequest) -> JSONResponse:
         key = req.key.strip()
 
-        # HMAC imza kontrolü
-        if not _verify_hmac_server(key):
+        # İmza kontrolü
+        if not _verify_signature_server(key):
             _log(key, req.hwid, "invalid")
             return JSONResponse({"status": "invalid", "msg": "Invalid key format"})
 
@@ -213,8 +242,8 @@ if HAS_FASTAPI:
         if not row:
             # GÜVENLİK DÜZELTMESİ: Veritabanında kayıt yoksa reddet. 
             # (Önceden imza geçerliyse 'active' dönüyordu, bu korsan lisans üretimine kapı açıyordu)
-            _log(key, req.hwid, "active")
-            return JSONResponse({"status": "active", "msg": "Valid key (unregistered)"})
+            _log(key, req.hwid, "invalid")
+            return JSONResponse({"status": "invalid", "msg": "Key not found in database"})
 
         status, stored_hwid = row
 
