@@ -184,6 +184,10 @@ if HAS_FASTAPI:
         expiry_days: int = 30
         note:        Optional[str] = None
 
+    class ResetHwidRequest(BaseModel):
+        key: Optional[str] = None
+        user_id: Optional[str] = None
+
     def _require_admin(x_admin_key: str = Header(default="")) -> None:
         import hmac
         if not hmac.compare_digest(x_admin_key.encode("utf-8"), ADMIN_KEY.encode("utf-8")):
@@ -250,7 +254,7 @@ if HAS_FASTAPI:
         # HWID bağlama — farklı makine
         if stored_hwid and req.hwid and stored_hwid != req.hwid:
             _log(key, req.hwid, "hwid_mismatch")
-            return JSONResponse({"status": "revoked", "msg": "HWID mismatch"})
+            return JSONResponse({"status": "hwid_mismatch", "msg": "License is linked to another device"})
 
         # İlk kullanımda HWID kaydet
         if not stored_hwid and req.hwid:
@@ -293,21 +297,46 @@ if HAS_FASTAPI:
     async def admin_list() -> JSONResponse:
         db   = _conn()
         rows = db.execute(
-            "SELECT key, tier, user_id, email, status, expiry_unix, created_at, note "
+            "SELECT key, tier, user_id, email, status, expiry_unix, created_at, note, hwid "
             "FROM licenses ORDER BY created_at DESC"
         ).fetchall()
         return JSONResponse([
             {
                 "key":     r[0][:25] + "...",
+                "key_prefix": r[0][:40],
                 "tier":    r[1],
                 "user_id": r[2],
                 "email":   r[3],
                 "status":  r[4],
                 "expiry":  r[5],
                 "note":    r[7],
+                "hwid_bound": bool(r[8]),
             }
             for r in rows
         ])
+
+    @app.post("/admin/reset_hwid", dependencies=[Depends(_require_admin)])
+    async def admin_reset_hwid(req: ResetHwidRequest) -> JSONResponse:
+        """Destek aksiyonu: lisansın cihaz bağını kaldır.
+
+        Bir sonraki başarılı doğrulamada lisans yeni cihazın HWID'sine bağlanır.
+        """
+        if not req.key and not req.user_id:
+            raise HTTPException(status_code=400, detail="key or user_id is required")
+
+        db = _conn()
+        if req.key:
+            cur = db.execute(
+                "UPDATE licenses SET hwid = NULL WHERE key = ?",
+                (req.key.strip(),),
+            )
+        else:
+            cur = db.execute(
+                "UPDATE licenses SET hwid = NULL WHERE user_id = ?",
+                (req.user_id.strip(),),
+            )
+        db.commit()
+        return JSONResponse({"status": "ok", "reset": cur.rowcount})
 
     @app.get("/health")
     async def health() -> JSONResponse:
