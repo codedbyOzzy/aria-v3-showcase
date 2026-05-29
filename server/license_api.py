@@ -244,10 +244,25 @@ if HAS_FASTAPI:
         ).fetchone()
 
         if not row:
-            # GÜVENLİK DÜZELTMESİ: Veritabanında kayıt yoksa reddet. 
-            # (Önceden imza geçerliyse 'active' dönüyordu, bu korsan lisans üretimine kapı açıyordu)
-            _log(key, req.hwid, "invalid")
-            return JSONResponse({"status": "invalid", "msg": "Key not found in database"})
+            # ECDSA imzası geçerli olan eski lisansları DB kaybı/deploy sonrası kilitleme.
+            # DB revocation/HWID overlay'dir; signed key'in kendisi geçerli lisans kaynağıdır.
+            try:
+                parts = key.split("-", maxsplit=4)
+                tier = parts[1].lower()
+                user_id = parts[2]
+                expiry_unix = int(parts[3])
+                db.execute(
+                    """INSERT OR IGNORE INTO licenses
+                       (key, tier, user_id, status, hwid, expiry_unix, created_at, note)
+                       VALUES (?, ?, ?, 'active', ?, ?, ?, ?)""",
+                    (key, tier, user_id, req.hwid, expiry_unix, int(time.time()), "auto-registered signed key"),
+                )
+                db.commit()
+                _log(key, req.hwid, "auto_registered")
+                return JSONResponse({"status": "active", "msg": "Signed key auto-registered"})
+            except Exception:
+                _log(key, req.hwid, "invalid")
+                return JSONResponse({"status": "invalid", "msg": "Key not found in database"})
 
         status, stored_hwid = row
 
