@@ -8,5 +8,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/aria-showcase/',
+  base: '/aria-v3-showcase/',
 })
