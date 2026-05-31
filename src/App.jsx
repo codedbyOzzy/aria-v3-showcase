@@ -4,7 +4,8 @@ import {
   Zap, Shield, Cpu, Layers, Workflow, Terminal, Code2, MoveRight, 
   Link as LinkIcon, FileCode2, Globe, FileText, Sunrise, Calendar, 
   CheckCircle2, Clock, Search, Eye, Lock, Volume2, Download, Check, 
-  Sparkles, Key, HardDrive, RefreshCw, AlertTriangle, Users, ChevronRight, Play, Pause, SkipForward
+  Sparkles, Key, HardDrive, RefreshCw, AlertTriangle, Users, ChevronRight, 
+  Play, Pause, SkipForward, HelpCircle, ArrowRightLeft, DollarSign, Settings
 } from 'lucide-react';
 
 const FadeIn = ({ children, delay = 0, direction = "up", className = "" }) => {
@@ -30,199 +31,224 @@ const FadeIn = ({ children, delay = 0, direction = "up", className = "" }) => {
 
 export default function App() {
   const [lang, setLang] = useState('TR'); // 'TR' or 'EN'
-  const [activePersona, setActivePersona] = useState('dev');
-  const [paletteQuery, setPaletteQuery] = useState('');
-  const [paletteResult, setPaletteResult] = useState('default');
-  const [showLicenseModal, setShowLicenseModal] = useState(false);
-  const [licenseKey, setLicenseKey] = useState('');
-  const [licenseStatus, setLicenseStatus] = useState('idle'); // idle, checking, success, error
-  const [spotifyPlaying, setSpotifyPlaying] = useState(false);
-  const [spotifyProgress, setSpotifyProgress] = useState(35);
+  
+  // Interactive Desktop Simulator Canvas States
+  const [activeWidget, setActiveWidget] = useState('bar'); // 'bar', 'panel', 'fab', 'toast'
+  const [simQuery, setSimQuery] = useState('');
+  const [simResult, setSimResult] = useState('idle');
+  const [simPanelTab, setSimPanelTab] = useState('briefing'); // 'briefing', 'spotify', 'night'
+  const [simSpotifyPlaying, setSimSpotifyPlaying] = useState(false);
+  const [simSpotifyProgress, setSimSpotifyProgress] = useState(42);
 
-  // Localization strings
+  // Technical Architecture Hub States
+  const [activeArchTab, setActiveArchTab] = useState('threading'); // 'threading', 'memory', 'pkce'
+  const [threadingState, setThreadingState] = useState('idle'); // 'idle', 'planning', 'parallel', 'complete'
+  
+  // Onboarding Wizard States
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1); // 1: Lang, 2: Persona, 3: Consents, 4: License
+  const [wizardLang, setWizardLang] = useState('TR');
+  const [wizardPersona, setWizardPersona] = useState('developer');
+  const [wizardConsents, setWizardConsents] = useState({
+    clipboard: true,
+    active_window: true,
+    file_repeats: false,
+    spotify: true
+  });
+  const [wizardLicenseKey, setWizardLicenseKey] = useState('');
+  const [wizardLicenseStatus, setWizardLicenseStatus] = useState('idle'); // idle, loading, success, error
+
+  // Night Shift Live Console States
+  const [consoleLogs, setConsoleLogs] = useState([]);
+  const [isConsoleRunning, setIsConsoleRunning] = useState(false);
+
+  // BYOK Savings Calculator States
+  const [apiRequests, setApiRequests] = useState(150); // Daily API requests
+
+  // Dictionary translations
   const t = {
     TR: {
-      navSubtitle: "Bilişsel Mimari • v3.0 Kararlı",
-      navContact: "İletişime Geç",
-      navGetLicense: "Lisans Anahtarı Al",
-      heroBadge: "KİŞİSEL YAPAY ZEKA İŞLETİM SİSTEMİ KATMANI",
-      heroTitle1: "OS'iniz Sizi Bilir.",
-      heroTitle2: "ARIA Sizi Hatırlar.",
-      heroDesc: "Sıradan chatbotların ve basit komut paletlerinin ötesine geçin. ARIA v3, alışkanlıklarınızı öğrenen, gizliliğinizi yerel olarak koruyan ve siz söylemeden harekete geçen otonom bir yapay zeka ortam katmanıdır.",
-      ctaStart: "Hemen Lisans Al",
-      ctaDemo: "Simülatörü Dene",
-      simTitle: "Etkileşimli Alt+Space Komut Paleti Simülatörü",
-      simDesc: "Aşağıdaki butonlara tıklayarak ARIA v3'ün <50ms anlık yanıt hızını ve masaüstü entegrasyon yeteneklerini web üzerinde test edin:",
-      simBtnLauncher: "Uygulama Çalıştırıcı",
-      simBtnSpotify: "Spotify Entegrasyonu",
-      simBtnCoder: "Yazılımcı Ajanı",
-      simBtnWindow: "Pencere Düzeni",
-      simBtnCalc: "Hızlı Hesaplama",
-      simPlaceholder: "Bir komut yazın veya yukarıdan seçin...",
-      simFastResponse: "Hızlı Yanıt (Fast Path)",
-      simLLMResponse: "Bilişsel Zeka Yanıtı (LLM)",
-      simLatency: "Gecikme Süresi",
-      archTitle: "Spagetti Koddan Bilişsel Mimariye",
-      archDesc: "ARIA v3, v2.x'teki tek parça god-class (tüm işi üstlenen) mimarisini tamamen parçalayarak bağımsız, yüksek performanslı motorlara böldü.",
-      archLegacy: "Eski Monolitik Yapı (v2.2.x)",
-      archNew: "Yeni Bilişsel Mimari (v3.0.0)",
-      archLegItem1: "God Class — agent.py (Streaming + Trim + Prompts hepsi bir yerde)",
-      archLegItem2: "Dump Alanı — bridge.py (Routing + streaming + UI slotları karışık)",
-      archLegItem3: "FAISS Sadece RAM (Her açılışta 2-5 saniye cold-start gecikmesi)",
-      archNewItem1: "Cognitive Engine (Planner, Fast Path, Tool Executor, Stream Coordinator)",
-      archNewItem2: "Context Engine (FTS5 Türkçe Hafıza, Disk Önbellekli FAISS, Profil Yöneticisi)",
-      archNewItem3: "Auth Broker & Permission Gate (OS düzeyinde token şifreleme ve izin kapısı)",
-      personaTitle: "Kişisel Onboarding Profilleri",
-      personaDesc: "ARIA v3 ilk açılışta seçtiğiniz mesleki kimliğe göre hafıza modelini, kısayollarını ve sistem prompt dilini otomatik olarak yapılandırır.",
-      privacyTitle: "Gizlilik & Yerel Güvenlik Kalesi",
-      privacyDesc: "ARIA, verilerinizi asla kendi sunucularına aktarmaz. Tüm entegrasyon şifreleriniz ve konuşma geçmişiniz tamamen sizin kontrolünüzdedir.",
-      privGate: "5 Durumlu İzin Kapısı",
-      privGateDesc: "Ekran görüntüsü, dosya yazma veya shell komutları için her zaman, oturumda bir kez sor veya tamamen engelle.",
-      privVault: "OS-Level Token Şifreleme",
-      privVaultDesc: "API anahtarlarınız ve Spotify token'larınız Windows Credential Manager & DPAPI ile doğrudan Windows oturumunuza kilitlenir.",
-      nightShiftTitle: "Night Shift v2 — Siz Uyurken O Çalışsın",
-      nightShiftDesc: "Sınırsız Pro sürümünde ARIA, uykuda olduğunuz zaman diliminde karmaşık araştırma, kodlama ve dokümantasyon görevlerini tamamen otonom olarak yürütür.",
+      brandSub: "Bilişsel Masaüstü Yapay Zekası",
+      navContact: "Lisans Desteği",
+      navVerify: "Lisans Aktifleştir",
+      badgeTitle: "BİLİŞSEL KATMAN • TİCARİ MASAÜSTÜ ÜRÜNÜ",
+      heroTagline1: "İşletim Sisteminiz Sizi Görür.",
+      heroTagline2: "ARIA Sizi Hatırlar.",
+      heroIntro: "ARIA v3 bir açık kaynak kodu veya chat kutusu değildir. Windows DPAPI şifrelemesi, 5 durumlu izin mekanizması ve yerel bilişsel motorlarıyla masaüstünüzü siz söylemeden yöneten, lisanslı ve profesyonel bir Ambient Intelligence (Ortam Zekası) katmanıdır.",
+      btnGetLicense: "Lisans Satın Al / Aktifleştir",
+      btnStartWizard: "Kurulum Sihirbazını Dene",
+      desktopTitle: "Omnipresent AI OS Katmanı Simülatörü",
+      desktopDesc: "ARIA v3 asistanınız, OS'inizle tam entegre çalışır. Aşağıdaki kontrol panelini kullanarak asistanın masaüstündeki 4 farklı yüzünü ve tepkilerini anlık olarak deneyimleyin:",
+      widgetBar: "Alt+Space Komut Paleti",
+      widgetPanel: "Bilişsel Kontrol Paneli",
+      widgetFab: "Clipboard Suggestion FAB",
+      widgetToast: "Proaktif Suggestion Toast",
+      simRunBtn: "Sorguyu Çalıştır",
+      simFast: "Hızlı Yanıt (Fast Path)",
+      simLLM: "LLM Bilişsel Zeka",
+      archTitle: "Derin Bilişsel Mühendislik Diyagramları",
+      archDesc: "ARIA v3'ün monolitik spagetti sınıflardan tamamen arındırılarak bağımsız motorlarla tasarlanan ticari yapısını yakından inceleyin:",
+      archTabThreading: "Eşzamanlı Bilişsel Akış",
+      archTabMemory: "Yerel Hibrit Bellek Şeması",
+      archTabPkce: "PKCE & DPAPI Güvenlik Sekansı",
+      wizardTitle: "ARIA v3 Onboarding Sihirbazı",
+      wizardDesc: "Desktop uygulamasındaki ilk açılış ve ECDSA lisans kontrol deneyimini interaktif olarak tamamlayın:",
       pricingTitle: "Yatırım Getirisi Net Ticari Paketler",
-      pricingDesc: "ARIA bir açık kaynak projesi değildir; iş akışınızı uçuracak, kararlılık garantili ve profesyonel destekli ticari bir üründür.",
-      pricingBYOK: "BYOK (Kendi Anahtarını Getir) Modeli",
-      pricingBYOKDesc: "Kendi OpenAI, Anthropic, Gemini veya local Ollama anahtarlarınızı bağlayarak yapay zeka maliyetlerinizi tamamen sıfıra indirebilirsiniz.",
-      freeTier: "Deneme (Free)",
-      proTier: "Profesyonel (Pro)",
-      teamTier: "Ekip (Team)",
-      freeLimit: "Temel Özellikler",
-      proLimit: "Gelişmiş Bilişsel Güç",
-      teamLimit: "Kurumsal İşbirliği",
-      buyNow: "Satın Al / Deneme Başlat",
-      licenseModalTitle: "ARIA v3 Lisans Aktivasyon Sihirbazı",
-      licenseModalDesc: "ARIA v3 Desktop uygulamasını indirdikten sonra size verilen lisans anahtarını girerek tam sürümü aktif edebilirsiniz. Test etmek için aşağıdaki butona basıp mock anahtarı deneyin.",
-      licenseMockBtn: "Örnek Pro Key Ekle",
-      licenseVerifyBtn: "Lisansı Doğrula (ECDSA)",
-      licenseSuccessMsg: "Tebrikler! ARIA v3 Pro Lisansınız ECDSA imzasıyla başarıyla doğrulandı. Kişisel AI OS hazır!",
-      licenseErrorMsg: "Hata: Geçersiz lisans anahtarı. Lütfen tekrar deneyin.",
+      pricingDesc: "AI API maliyetlerini tamamen size bırakan BYOK altyapısı ve platform değeriyle kurgulanan profesyonel ürün paketleri.",
+      calcTitle: "BYOK (Kendi Anahtarını Getir) Tasarruf Hesaplayıcı",
+      calcDesc: "Abonelik modellerine servet ödemek yerine, kendi API anahtarlarınızı (OpenAI, Anthropic, Gemini, Groq, Ollama) bağlayarak elde edeceğiniz aylık net tasarrufu hesaplayın:",
+      dailyRequests: "Günlük Yapay Zeka İstek Adedi",
+      estCostChat: "Düz Chatbot Aboneliği (Aylık)",
+      estCostAria: "ARIA Platform Ücreti + Kendi API Maliyetiniz",
+      estSavings: "Aylık Net Finansal Tasarrufunuz",
+      consoleTitle: "Night Shift v2 — Otonom Konsol Akışı",
+      consoleDesc: "Siz bilgisayar başında değilken ARIA'nın arka planda yürüttüğü otonom görevlerin gerçek zamanlı `structlog` (yapılandırılmış JSON) günlük akışını izleyin:",
+      startConsole: "Otonom Görevi Başlat",
+      bentoTitle: "Bilişsel Katman Yetenek Matrisi",
+      bentoDesc: "ARIA v3'ün kapalı kodlu, güvenlik ve hız öncelikli mühendislik detayları.",
     },
     EN: {
-      navSubtitle: "Cognitive Architecture • v3.0 Stable",
-      navContact: "Contact Support",
-      navGetLicense: "Get License Key",
-      heroBadge: "PERSONAL AI OPERATING SYSTEM LAYER",
-      heroTitle1: "Your OS Knows You.",
-      heroTitle2: "ARIA Remembers You.",
-      heroDesc: "Go beyond generic chatbots and basic launchers. ARIA v3 is a proprietary, ambient intelligence layer that learns your preferences, secures your privacy locally, and acts pro-actively without you having to ask.",
-      ctaStart: "Get License Now",
-      ctaDemo: "Try Simulator",
-      simTitle: "Interactive Alt+Space Command Palette Simulator",
-      simDesc: "Click the buttons below to test ARIA v3's <50ms instant response latency and native OS integration capabilities directly on the web:",
-      simBtnLauncher: "App Launcher",
-      simBtnSpotify: "Spotify Integration",
-      simBtnCoder: "Coder Specialist",
-      simBtnWindow: "Window Grid",
-      simBtnCalc: "Instant Calculation",
-      simPlaceholder: "Type a command or select one above...",
-      simFastResponse: "Fast Path Response",
-      simLLMResponse: "Cognitive AI Response (LLM)",
-      simLatency: "Latency Check",
-      archTitle: "From Spaghetti Code to Cognitive Architecture",
-      archDesc: "ARIA v3 shatters the monolithic god-classes (agent.py and bridge.py) of v2.x into clean, decoupled, high-performance engines.",
-      archLegacy: "Legacy Monolithic Architecture (v2.2.x)",
-      archNew: "New Cognitive Architecture (v3.0.0)",
-      archLegItem1: "God Class — agent.py (Streaming + Trim + Prompts tightly coupled)",
-      archLegItem2: "Dump Area — bridge.py (Routing + streaming + UI slots mixed)",
-      archLegItem3: "RAM-only FAISS (2-5 seconds cold-start latency on every launch)",
-      archNewItem1: "Cognitive Engine (Planner, Fast Path, Tool Executor, Stream Coordinator)",
-      archNewItem2: "Context Engine (FTS5 Memory, Disk-cached FAISS, Profile Manager)",
-      archNewItem3: "Auth Broker & Permission Gate (OS-level token encryption and safety gate)",
-      personaTitle: "Onboarding Personas",
-      personaDesc: "ARIA v3 automatically configures its memory models, short-keys, and system prompts based on the professional profile selected during startup.",
-      privacyTitle: "Gizlilik & Yerel Güvenlik Kalesi",
-      privacyDesc: "ARIA never uploads your raw interaction data to remote servers. All your credentials and history logs stay encrypted on your hard drive.",
-      privGate: "5-State Permission Gate",
-      privGateDesc: "Choose to Always Allow, Ask Every Time, Ask Once per Session, or Deny screen capture, file write, and shell executions.",
-      privVault: "OS-Level Token Security",
-      privVaultDesc: "API keys and OAuth tokens are stored inside Windows Credential Manager & DPAPI, securely locked to your Windows user session.",
-      nightShiftTitle: "Night Shift v2 — Autonomous Off-Hours Execution",
-      nightShiftDesc: "In the unlimited Pro tier, ARIA coordinates multi-step research, coding, and audit tasks autonomously while you are asleep.",
+      brandSub: "Cognitive Desktop AI Layer",
+      navContact: "License Support",
+      navVerify: "Activate License",
+      badgeTitle: "COGNITIVE LAYER • COMMERCIAL DESKTOP PRODUCT",
+      heroTagline1: "Your OS Sees You.",
+      heroTagline2: "ARIA Remembers You.",
+      heroIntro: "ARIA v3 is not an open-source script or a basic chat box. It is a highly optimized, licensed Ambient Intelligence layer featuring Windows DPAPI security, a 5-state Permission Gate, and parallel cognitive engines running locally.",
+      btnGetLicense: "Purchase / Activate License",
+      btnStartWizard: "Try Onboarding Wizard",
+      desktopTitle: "Omnipresent AI OS Layer Simulator",
+      desktopDesc: "ARIA v3 operates seamlessly with your OS. Use the control panel below to interact with the 4 distinct layout faces of ARIA directly on the desktop canvas:",
+      widgetBar: "Alt+Space Command Palette",
+      widgetPanel: "Cognitive Control Panel",
+      widgetFab: "Clipboard Suggestion FAB",
+      widgetToast: "Proactive Suggestion Toast",
+      simRunBtn: "Execute Command",
+      simFast: "Instant (Fast Path)",
+      simLLM: "LLM Cognitive AI",
+      archTitle: "Deep Cognitive Engineering Visuals",
+      archDesc: "Explore the proprietary, decoupled architecture of ARIA v3 built from the ground up for extreme concurrency and zero data leaks:",
+      archTabThreading: "Parallel Cognitive Threading",
+      archTabMemory: "Local Hybrid Memory Schema",
+      archTabPkce: "PKCE & DPAPI Security Sequence",
+      wizardTitle: "ARIA v3 Onboarding Wizard",
+      wizardDesc: "Simulate the native desktop app installation flow and ECDSA license verification process interactively:",
       pricingTitle: "ROI-Focused Commercial Tiers",
-      pricingDesc: "ARIA is a proprietary commercial product built with extreme stability, secure OTA updates, and 24/7 priority support.",
-      pricingBYOK: "BYOK (Bring Your Own Key) Model",
-      pricingBYOKDesc: "Connect your own OpenAI, Anthropic, Gemini, or local Ollama keys to completely zero out your AI API expenses.",
-      freeTier: "Free Trial",
-      proTier: "Professional (Pro)",
-      teamTier: "Team / Enterprise",
-      freeLimit: "Essential Features",
-      proLimit: "Advanced Cognitive Power",
-      teamLimit: "Corporate Collaboration",
-      buyNow: "Purchase License / Start Trial",
-      licenseModalTitle: "ARIA v3 License Activation Wizard",
-      licenseModalDesc: "Enter the secure license key provided to you after downloading ARIA v3. Click the button below to paste a mock key and test the ECDSA verification flow.",
-      licenseMockBtn: "Load Sample Pro Key",
-      licenseVerifyBtn: "Verify License (ECDSA)",
-      licenseSuccessMsg: "Success! Your ARIA v3 Pro License has been securely validated via ECDSA. Personal AI OS initialized!",
-      licenseErrorMsg: "Error: Invalid license key format. Please try again.",
+      pricingDesc: "Professional licensing tiers built around platform value, local deep memory persistence, and full BYOK cost flexibility.",
+      calcTitle: "BYOK (Bring Your Own Key) Savings Calculator",
+      calcDesc: "Calculate your estimated monthly savings by connecting your own API keys (OpenAI, Anthropic, Gemini, Groq, Ollama) instead of paying flat $20 subscription fees:",
+      dailyRequests: "Daily AI Prompts/Requests",
+      estCostChat: "Standard Chatbot Subscription",
+      estCostAria: "ARIA Platform Fee + Your Direct API Cost",
+      estSavings: "Net Monthly Financial Savings",
+      consoleTitle: "Night Shift v2 — Autonomous Console Stream",
+      consoleDesc: "Watch the real-time structured logging (`structlog` formatted JSON lines) generated by ARIA as it executes background tasks autonomously:",
+      startConsole: "Trigger Autonomous Night Job",
+      bentoTitle: "Capabilities Bento Matrix",
+      bentoDesc: "Under the hood details of ARIA's secure, performance-first proprietary desktop software.",
     }
   };
 
-  // Simulates command outputs
-  const handleSimCommand = (cmdType) => {
-    if (cmdType === 'launcher') {
-      setPaletteQuery('ch');
-      setPaletteResult('launcher');
-    } else if (cmdType === 'spotify') {
-      setPaletteQuery('spotify');
-      setPaletteResult('spotify');
-    } else if (cmdType === 'coder') {
-      setPaletteQuery('/code generate rest api');
-      setPaletteResult('coder');
-    } else if (cmdType === 'window') {
-      setPaletteQuery('>snap-left');
-      setPaletteResult('window');
-    } else if (cmdType === 'calc') {
-      setPaletteQuery('256 * 4 / 2');
-      setPaletteResult('calc');
-    }
-  };
-
-  // Simulated Spotify progression
+  // Simulating Spotify player tick
   useEffect(() => {
     let interval;
-    if (spotifyPlaying) {
+    if (simSpotifyPlaying) {
       interval = setInterval(() => {
-        setSpotifyProgress(prev => (prev >= 100 ? 0 : prev + 1));
+        setSimSpotifyProgress(p => (p >= 100 ? 0 : p + 1));
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [spotifyPlaying]);
+  }, [simSpotifyPlaying]);
 
-  // Handle mock license verification
-  const handleVerifyLicense = () => {
-    setLicenseStatus('checking');
+  // Simulated Threading animation triggers
+  const triggerThreadingSimulation = () => {
+    setThreadingState('planning');
     setTimeout(() => {
-      if (licenseKey.trim().toUpperCase() === 'ARIA-V3-PRO-KEY') {
-        setLicenseStatus('success');
+      setThreadingState('parallel');
+      setTimeout(() => {
+        setThreadingState('complete');
+      }, 2000);
+    }, 1200);
+  };
+
+  // Onboarding License activation
+  const handleVerifyLicense = () => {
+    setWizardLicenseStatus('loading');
+    setTimeout(() => {
+      if (wizardLicenseKey.trim().toUpperCase() === 'ARIA-V3-PRO-KEY') {
+        setWizardLicenseStatus('success');
       } else {
-        setLicenseStatus('error');
+        setWizardLicenseStatus('error');
       }
     }, 1500);
   };
 
+  // Structured logger simulation for Night Shift v2
+  const runConsoleSimulation = () => {
+    if (isConsoleRunning) return;
+    setIsConsoleRunning(true);
+    setConsoleLogs([]);
+    
+    const logs = [
+      { t: "03:00:01", lvl: "INFO", ev: "night_shift.start_job", job: "Audit Report Generation", detail: "Night Shift v2 initialized." },
+      { t: "03:00:02", lvl: "INFO", ev: "planner.analyze_complexity", query: "Audit competitors, write report, delete temp logs", complexity: "HIGH" },
+      { t: "03:00:03", lvl: "WARNING", ev: "safe_tools.filter_unsafe", action: "file_delete", status: "BLOCKED", detail: "Destructive file deletion is restricted in Night Shift. Requiring wakeup." },
+      { t: "03:00:05", lvl: "INFO", ev: "web_search.execute", query: "personal ai os trends 2026", ttft_ms: 142 },
+      { t: "03:00:08", lvl: "INFO", ev: "agent.coder.stream_report", target_file: "reports/competitor_audit.md", lines: 148 },
+      { t: "03:00:11", lvl: "INFO", ev: "verifier.checksum_verify", file: "reports/competitor_audit.md", hash: "SHA256:abc123def", status: "SUCCESS" },
+      { t: "03:00:13", lvl: "SUCCESS", ev: "night_shift.complete_job", status: "DONE", elapsed_sec: 12.4 }
+    ];
+
+    logs.forEach((log, index) => {
+      setTimeout(() => {
+        setConsoleLogs(prev => [...prev, JSON.stringify(log)]);
+        if (index === logs.length - 1) {
+          setIsConsoleRunning(false);
+        }
+      }, index * 1200);
+    });
+  };
+
+  // Cost calculator math
+  const calculateCosts = () => {
+    const tokensPerRequest = 1800; // avg prompt + response
+    const avgTokenCost = 0.0000025; // average cost per token in BYOK (mix of fast and deep models)
+    const directApiCost = apiRequests * 30 * tokensPerRequest * avgTokenCost;
+    
+    const standardCost = 20; // ChatGPT Plus / Copilot Pro
+    const ariaCost = 8 + directApiCost; // Pro platform fee + direct token cost
+    const savings = Math.max(0, standardCost - ariaCost);
+
+    return {
+      apiCost: directApiCost.toFixed(2),
+      standardCost: standardCost.toFixed(2),
+      ariaCost: ariaCost.toFixed(2),
+      savings: savings.toFixed(2)
+    };
+  };
+
+  const costs = calculateCosts();
+
   return (
-    <div className="bg-zinc-950 min-h-screen text-zinc-50 font-sans selection:bg-purple-500/30 overflow-hidden relative">
+    <div className="bg-zinc-950 min-h-screen text-zinc-50 font-sans selection:bg-purple-500/30 overflow-hidden relative noise-overlay">
       
-      {/* Background ambient glows */}
-      <div className="fixed inset-0 pointer-events-none noise z-0" />
-      <div className="fixed top-0 left-1/4 -translate-x-1/2 w-[700px] h-[500px] bg-purple-950/10 blur-[130px] rounded-full pointer-events-none z-0" />
-      <div className="fixed top-0 right-1/4 translate-x-1/2 w-[700px] h-[500px] bg-indigo-950/10 blur-[130px] rounded-full pointer-events-none z-0" />
-      <div className="fixed bottom-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-purple-900/5 blur-[150px] rounded-full pointer-events-none z-0" />
+      {/* Visual background grid pattern */}
+      <div className="grid-overlay" />
+
+      {/* Top gradient blur rings */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-r from-purple-900/10 to-indigo-900/10 blur-[130px] rounded-full pointer-events-none z-0" />
+      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-950/5 blur-[150px] rounded-full pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 glass border-b-0 border-white/5 px-6 py-4">
+      <nav className="fixed top-0 w-full z-50 glass border-b-0 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center glow-purple-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500/15 to-indigo-500/15 border border-purple-500/25 flex items-center justify-center glow-purple-sm">
               <div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse-glow" />
             </div>
             <div className="flex flex-col">
               <span className="font-bold tracking-[0.25em] text-sm">ARIA v3</span>
-              <span className="text-[10px] text-zinc-500 font-mono tracking-tight">{t[lang].navSubtitle}</span>
+              <span className="text-[9px] text-zinc-500 font-mono tracking-tight uppercase">{t[lang].brandSub}</span>
             </div>
           </div>
 
@@ -236,23 +262,25 @@ export default function App() {
             </button>
             <button 
               onClick={() => {
-                setLicenseKey('');
-                setLicenseStatus('idle');
-                setShowLicenseModal(true);
+                setWizardStep(4);
+                setWizardLicenseStatus('idle');
+                setWizardLicenseKey('');
+                setShowWizard(true);
               }}
               className="hidden md:inline-flex text-xs font-mono font-bold text-zinc-400 hover:text-white px-3 py-1.5 transition-all cursor-pointer"
             >
-              {t[lang].navGetLicense}
+              {t[lang].navVerify}
             </button>
             <button 
               onClick={() => {
-                setLicenseKey('');
-                setLicenseStatus('idle');
-                setShowLicenseModal(true);
+                setWizardStep(1);
+                setWizardLicenseStatus('idle');
+                setWizardLicenseKey('');
+                setShowWizard(true);
               }}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-mono font-bold px-4 py-2 rounded-xl transition-all duration-300 shadow-lg glow-purple-sm hover:scale-[1.03] cursor-pointer"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-mono font-bold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-lg glow-purple-sm hover:scale-[1.03] cursor-pointer"
             >
-              {t[lang].ctaStart}
+              {t[lang].btnStartWizard}
             </button>
           </div>
         </div>
@@ -265,38 +293,43 @@ export default function App() {
           <FadeIn delay={0.1}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-[10px] md:text-xs font-mono text-purple-300 mb-6 border border-purple-500/20 shadow-inner">
               <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse glow-purple-sm" />
-              {t[lang].heroBadge}
+              {t[lang].badgeTitle}
             </div>
           </FadeIn>
 
           <FadeIn delay={0.2}>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter mb-8 leading-[0.95] select-none">
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-300 to-zinc-600 font-light block mb-2">{t[lang].heroTitle1}</span>
-              <span className="text-white text-glow-purple">{t[lang].heroTitle2}</span>
+            <h1 className="text-5xl md:text-7xl lg:text-9xl font-extrabold tracking-tighter mb-8 leading-[0.9] select-none">
+              <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-300 to-zinc-600 font-light block mb-2">{t[lang].heroTagline1}</span>
+              <span className="text-white text-glow-purple">{t[lang].heroTagline2}</span>
             </h1>
           </FadeIn>
 
           <FadeIn delay={0.3}>
-            <p className="text-base md:text-xl text-zinc-400 font-light max-w-3xl mx-auto leading-relaxed mb-12">
-              {t[lang].heroDesc}
+            <p className="text-base md:text-lg text-zinc-400 font-light max-w-3xl mx-auto leading-relaxed mb-12">
+              {t[lang].heroIntro}
             </p>
           </FadeIn>
 
           <FadeIn delay={0.4}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button 
-                onClick={() => setShowLicenseModal(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold shadow-xl glow-purple hover:scale-105 transition-all duration-300 cursor-pointer"
+                onClick={() => {
+                  setWizardStep(4);
+                  setWizardLicenseStatus('idle');
+                  setWizardLicenseKey('');
+                  setShowWizard(true);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold shadow-xl glow-purple hover:scale-105 transition-all duration-300 cursor-pointer"
               >
-                <Download className="w-5 h-5" />
-                {t[lang].buyNow}
+                <Key className="w-5 h-5" />
+                {t[lang].btnGetLicense}
               </button>
               <a 
-                href="#simulator"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl glass hover:bg-white/10 text-zinc-300 font-semibold border border-white/10 transition-all cursor-pointer"
+                href="#desktop"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-4 px-8 py-4 rounded-2xl glass hover:bg-white/10 text-zinc-300 font-bold border border-white/10 transition-all cursor-pointer"
               >
                 <Play className="w-4 h-4 text-purple-400" />
-                {t[lang].ctaDemo}
+                {t[lang].desktopTitle.split(" ")[0]} Simulator
               </a>
             </div>
           </FadeIn>
@@ -304,289 +337,261 @@ export default function App() {
         </div>
       </section>
 
-      {/* Interactive Command Palette Simulator */}
-      <section id="simulator" className="py-24 px-6 relative z-10 border-t border-white/5 bg-black/20">
+      {/* Desktop Simulator Canvas */}
+      <section id="desktop" className="py-24 px-6 relative z-10 border-t border-white/5 bg-zinc-950/40">
         <div className="max-w-7xl mx-auto">
           
           <div className="text-center mb-16 max-w-4xl mx-auto">
             <FadeIn>
-              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].simTitle}</h2>
-              <p className="text-zinc-400 text-lg leading-relaxed">
-                {t[lang].simDesc}
+              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].desktopTitle}</h2>
+              <p className="text-zinc-400 text-base leading-relaxed">
+                {t[lang].desktopDesc}
               </p>
             </FadeIn>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-8 items-start">
+          <div className="grid lg:grid-cols-12 gap-8 items-stretch">
             
-            {/* Commands Left Panel */}
-            <div className="lg:col-span-4 space-y-3">
-              <FadeIn delay={0.1} className="flex flex-col gap-2">
-                <button 
-                  onClick={() => handleSimCommand('launcher')}
-                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${paletteResult === 'launcher' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:bg-zinc-900'}`}
+            {/* Widget Toggles Panel */}
+            <div className="lg:col-span-4 flex flex-col justify-center gap-3">
+              {[
+                { id: 'bar', label: t[lang].widgetBar, shortcut: 'Alt+Space', color: 'text-purple-400' },
+                { id: 'panel', label: t[lang].widgetPanel, shortcut: 'Tab', color: 'text-indigo-400' },
+                { id: 'fab', label: t[lang].widgetFab, shortcut: 'Clipboard Copied', color: 'text-green-400' },
+                { id: 'toast', label: t[lang].widgetToast, shortcut: 'Proactive Alert', color: 'text-yellow-400' }
+              ].map(widget => (
+                <button
+                  key={widget.id}
+                  onClick={() => {
+                    setActiveWidget(widget.id);
+                    if (widget.id === 'bar') {
+                      setSimQuery('ch');
+                      setSimResult('launcher');
+                    }
+                  }}
+                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${activeWidget === widget.id ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/40 border-white/5 text-zinc-500 hover:text-zinc-300'}`}
                 >
                   <div className="flex items-center gap-3">
-                    <Search className="w-4 h-4 text-purple-400" />
-                    <span className="font-mono text-sm">{t[lang].simBtnLauncher}</span>
+                    <div className={`w-2 h-2 rounded-full bg-purple-400 ${activeWidget === widget.id ? 'animate-pulse' : 'opacity-30'}`} />
+                    <span className="font-mono text-xs font-bold">{widget.label}</span>
                   </div>
-                  <span className="text-[10px] font-mono opacity-50 bg-zinc-950 px-2 py-0.5 rounded border border-white/10">"ch"</span>
+                  <span className="text-[9px] font-mono opacity-50 bg-zinc-950 px-2 py-0.5 rounded border border-white/10">{widget.shortcut}</span>
                 </button>
-
-                <button 
-                  onClick={() => handleSimCommand('spotify')}
-                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${paletteResult === 'spotify' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:bg-zinc-900'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <LinkIcon className="w-4 h-4 text-green-400" />
-                    <span className="font-mono text-sm">{t[lang].simBtnSpotify}</span>
-                  </div>
-                  <span className="text-[10px] font-mono opacity-50 bg-zinc-950 px-2 py-0.5 rounded border border-white/10">"spotify"</span>
-                </button>
-
-                <button 
-                  onClick={() => handleSimCommand('coder')}
-                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${paletteResult === 'coder' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:bg-zinc-900'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Code2 className="w-4 h-4 text-indigo-400" />
-                    <span className="font-mono text-sm">{t[lang].simBtnCoder}</span>
-                  </div>
-                  <span className="text-[10px] font-mono opacity-50 bg-zinc-950 px-2 py-0.5 rounded border border-white/10">"/code"</span>
-                </button>
-
-                <button 
-                  onClick={() => handleSimCommand('window')}
-                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${paletteResult === 'window' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:bg-zinc-900'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Workflow className="w-4 h-4 text-cyan-400" />
-                    <span className="font-mono text-sm">{t[lang].simBtnWindow}</span>
-                  </div>
-                  <span className="text-[10px] font-mono opacity-50 bg-zinc-950 px-2 py-0.5 rounded border border-white/10">"&gt;snap-left"</span>
-                </button>
-
-                <button 
-                  onClick={() => handleSimCommand('calc')}
-                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${paletteResult === 'calc' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-400 hover:bg-zinc-900'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Cpu className="w-4 h-4 text-pink-400" />
-                    <span className="font-mono text-sm">{t[lang].simBtnCalc}</span>
-                  </div>
-                  <span className="text-[10px] font-mono opacity-50 bg-zinc-950 px-2 py-0.5 rounded border border-white/10">"256 * 4 / 2"</span>
-                </button>
-              </FadeIn>
+              ))}
             </div>
 
-            {/* Command Palette Visualizer Screen */}
+            {/* Desktop Workspace Render Canvas */}
             <div className="lg:col-span-8">
-              <FadeIn delay={0.2} className="glass rounded-2xl border-white/10 overflow-hidden glow-purple shadow-2xl relative">
+              <FadeIn delay={0.2} className="relative h-[480px] rounded-2xl overflow-hidden border border-white/10 glow-purple shadow-2xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-zinc-950 to-black select-none">
                 
-                {/* Window header */}
-                <div className="bg-zinc-900/80 px-4 py-3 border-b border-white/5 flex items-center justify-between font-mono text-[11px] text-zinc-500 select-none">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-500/30" />
-                    <span className="w-3 h-3 rounded-full bg-yellow-500/30" />
-                    <span className="w-3 h-3 rounded-full bg-green-500/30" />
+                {/* Simulated Desktop Wallpaper background assets */}
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-purple-600/5 via-transparent to-indigo-600/5 z-0" />
+                <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-purple-500/5 blur-[120px] rounded-full z-0" />
+                
+                {/* Simulated Menu Bar / Taskbar (Windows Mock) */}
+                <div className="absolute bottom-0 w-full bg-zinc-950/80 px-4 py-2.5 border-t border-white/5 z-20 flex items-center justify-between font-mono text-[10px] text-zinc-600">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded bg-purple-500/30" />
+                    <span>Windows 11 Client</span>
                   </div>
-                  <span>ARIA — Alt+Space Command Surface</span>
-                  <span className="text-purple-400">Stable v3.0.0</span>
-                </div>
-
-                {/* Input Bar */}
-                <div className="p-4 bg-zinc-950/60 border-b border-white/5 flex items-center gap-3 relative">
-                  <Terminal className="w-5 h-5 text-purple-400" />
-                  <input 
-                    type="text" 
-                    readOnly
-                    value={paletteQuery} 
-                    placeholder={t[lang].simPlaceholder}
-                    className="bg-transparent border-0 outline-none text-base w-full text-zinc-100 font-mono"
-                  />
-                  <div className="flex items-center gap-1">
-                    <kbd className="text-[10px] bg-zinc-900 border border-white/10 px-2 py-0.5 rounded text-zinc-500">Esc</kbd>
-                    <kbd className="text-[10px] bg-purple-600 px-2 py-0.5 rounded text-white font-mono">Enter</kbd>
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-green-400" /> DPAPI Encrypted</span>
+                    <span>18:13 PM</span>
                   </div>
                 </div>
 
-                {/* Screen Content */}
-                <div className="p-6 min-h-[280px] bg-zinc-950/40 relative font-mono text-sm leading-relaxed overflow-y-auto">
+                {/* Simulated Widgets inside Canvas */}
+                <div className="absolute inset-0 p-6 z-10 flex flex-col justify-between">
+                  
                   <AnimatePresence mode="wait">
                     
-                    {paletteResult === 'default' && (
+                    {/* Floating Alt+Space Bar Widget */}
+                    {activeWidget === 'bar' && (
                       <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }}
-                        className="text-zinc-500 space-y-4"
+                        initial={{ opacity: 0, scale: 0.95, y: -20 }} 
+                        animate={{ opacity: 1, scale: 1, y: 0 }} 
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="w-full max-w-lg mx-auto glass rounded-xl border-white/10 overflow-hidden shadow-2xl mt-12"
                       >
-                        <div>&gt; System initialized. Alt+Space is bound to global hotkey.</div>
-                        <div className="text-purple-400/70">💡 Press one of the trigger buttons on the left or type your command to run simulations.</div>
-                        <div className="grid grid-cols-2 gap-4 pt-6">
-                          <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl">
-                            <div className="font-bold text-zinc-300 mb-1">⚡ Fast Path</div>
-                            <div className="text-xs">Math, time, system snaps are solved instantly in &lt;15ms without querying LLMs.</div>
-                          </div>
-                          <div className="p-4 bg-zinc-900/30 border border-white/5 rounded-xl">
-                            <div className="font-bold text-zinc-300 mb-1">🔐 Privacy Gate</div>
-                            <div className="text-xs">Token storage locked to Windows DPAPI encryption. No cloud leaks.</div>
-                          </div>
+                        <div className="p-3 bg-zinc-950/80 border-b border-white/5 flex items-center gap-3">
+                          <Search className="w-4 h-4 text-purple-400" />
+                          <input 
+                            type="text" 
+                            readOnly
+                            value={simQuery} 
+                            placeholder="Type 'ch' to search apps or '2+2'..."
+                            className="bg-transparent text-xs font-mono outline-none border-none text-zinc-300 w-full"
+                          />
+                          <div className="text-[9px] bg-purple-600 px-2 py-0.5 rounded text-white font-mono">Alt+Space</div>
+                        </div>
+                        <div className="p-4 bg-zinc-950/50 min-h-[140px] font-mono text-[11px] leading-relaxed">
+                          {simResult === 'launcher' ? (
+                            <div className="space-y-2">
+                              <div className="text-purple-400 text-[10px] uppercase font-bold tracking-wider mb-2">Fast App Launcher (&lt;20ms RAM Index)</div>
+                              <div className="p-2.5 bg-purple-950/15 border border-purple-500/25 rounded-lg flex items-center justify-between text-zinc-200">
+                                <span>🚀 Visual Studio Code</span>
+                                <span className="opacity-50 text-[9px]">C:\Program Files\VS Code\Code.exe</span>
+                              </div>
+                              <div className="p-2.5 bg-zinc-900/40 border border-white/5 rounded-lg flex items-center justify-between text-zinc-500">
+                                <span>🌐 Google Chrome</span>
+                                <span className="opacity-50 text-[9px]">C:\Program Files\Chrome.exe</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-zinc-500 space-y-2">
+                              <div>&gt; Summons instantly.</div>
+                              <div className="text-purple-400/60">💡 Click the button below to simulate running "ch":</div>
+                              <button 
+                                onClick={() => {
+                                  setSimQuery('ch');
+                                  setSimResult('launcher');
+                                }}
+                                className="bg-purple-600/10 border border-purple-500/30 px-3 py-1 rounded text-purple-300 text-[10px] hover:bg-purple-600/20 cursor-pointer transition-all"
+                              >
+                                Run "ch" Simulation
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     )}
 
-                    {paletteResult === 'launcher' && (
+                    {/* sliding cognitive Panel Widget */}
+                    {activeWidget === 'panel' && (
                       <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="space-y-4"
+                        initial={{ opacity: 0, x: 100 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        exit={{ opacity: 0, x: 100 }}
+                        className="absolute right-0 top-0 bottom-12 w-80 glass border-l border-white/10 h-[calc(100%-44px)] overflow-hidden flex flex-col justify-between"
                       >
-                        <div className="flex items-center justify-between text-xs text-purple-400 border-b border-white/5 pb-2">
-                          <span>{t[lang].simFastResponse} (&lt;20ms app index)</span>
-                          <span>3 MATCHES FOUND</span>
+                        {/* Panel Header */}
+                        <div className="p-4 bg-zinc-950/80 border-b border-white/5 flex items-center justify-between font-mono text-[10px] text-zinc-400">
+                          <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5 text-purple-400" /> Bilişsel Kontrol Paneli</span>
+                          <span className="opacity-50 font-mono">v3.0</span>
                         </div>
-                        <div className="space-y-2">
-                          <div className="p-3 bg-purple-600/10 border border-purple-500/30 rounded-xl flex items-center justify-between text-zinc-200">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-white/5 text-purple-400 font-bold">VS</div>
-                              <div>
-                                <div className="font-bold text-sm">Visual Studio Code</div>
-                                <div className="text-[10px] text-zinc-500">C:\Program Files\Microsoft VS Code\Code.exe</div>
-                              </div>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-purple-400" />
-                          </div>
-                          <div className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl flex items-center justify-between text-zinc-400">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-white/5 text-zinc-500 font-bold">Ch</div>
-                              <div>
-                                <div className="font-bold text-sm">Google Chrome</div>
-                                <div className="text-[10px] text-zinc-500">C:\Program Files\Google\Chrome\Application\chrome.exe</div>
-                              </div>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-zinc-600" />
-                          </div>
-                          <div className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl flex items-center justify-between text-zinc-400">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-white/5 text-green-400 font-bold">Sp</div>
-                              <div>
-                                <div className="font-bold text-sm">Spotify</div>
-                                <div className="text-[10px] text-zinc-500">C:\Users\User\AppData\Roaming\Spotify\Spotify.exe</div>
-                              </div>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-zinc-600" />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
 
-                    {paletteResult === 'spotify' && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="space-y-4"
-                      >
-                        <div className="flex items-center justify-between text-xs text-green-400 border-b border-white/5 pb-2">
-                          <span>🎵 Spotify Broker Connection (PKCE OAuth Verified)</span>
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse glow-green-sm" />
-                            Premium Connected
-                          </span>
-                        </div>
-                        <div className="p-4 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center gap-5 relative overflow-hidden">
-                          <div className="w-20 h-20 rounded-xl bg-gradient-to-tr from-green-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-lg relative shrink-0">
-                            <Sparkles className="w-8 h-8 text-green-400 animate-pulse-glow" />
-                          </div>
-                          <div className="flex-1 space-y-2 min-w-0">
-                            <div className="truncate font-bold text-zinc-100 text-base">Cognitive Flow (Synapse Sessions)</div>
-                            <div className="text-zinc-400 text-xs truncate">ARIA v3 Soundtrack Edition</div>
-                            <div className="space-y-1">
-                              <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 transition-all" style={{ width: `${spotifyProgress}%` }} />
-                              </div>
-                              <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
-                                <span>0:{spotifyProgress < 10 ? '0' : ''}{spotifyProgress}</span>
-                                <span>2:45</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <button 
-                              onClick={() => setSpotifyPlaying(!spotifyPlaying)}
-                              className="w-10 h-10 rounded-full bg-green-500 hover:bg-green-400 text-zinc-950 flex items-center justify-center transition-all cursor-pointer"
+                        {/* Tabs */}
+                        <div className="grid grid-cols-3 border-b border-white/5 text-[9px] font-mono text-zinc-500 text-center">
+                          {['briefing', 'spotify', 'night'].map(tab => (
+                            <button
+                              key={tab}
+                              onClick={() => setSimPanelTab(tab)}
+                              className={`py-2 cursor-pointer uppercase ${simPanelTab === tab ? 'border-b border-purple-500 text-purple-400 bg-white/5' : 'hover:text-zinc-300'}`}
                             >
-                              {spotifyPlaying ? <Pause className="w-4 h-4 fill-zinc-950" /> : <Play className="w-4 h-4 fill-zinc-950 translate-x-0.5" />}
+                              {tab}
                             </button>
-                            <button className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-all cursor-pointer">
-                              <SkipForward className="w-3.5 h-3.5 fill-zinc-300" />
-                            </button>
-                          </div>
+                          ))}
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="p-4 flex-1 overflow-y-auto text-[11px] font-mono text-zinc-400 leading-relaxed space-y-3">
+                          {simPanelTab === 'briefing' && (
+                            <div className="space-y-2">
+                              <div className="text-purple-300 font-bold flex items-center gap-1.5"><Sunrise className="w-4 h-4 text-purple-400" /> Sabah Özeti (Morning Briefing)</div>
+                              <div className="bg-zinc-950/50 p-2.5 rounded border border-white/5 text-[10px]">
+                                <div className="text-zinc-500 font-bold">Takvim:</div>
+                                <div>• 09:30 - ARIA v3 Sprint Review</div>
+                                <div className="text-zinc-500 font-bold mt-2">Öğrenilen Tercihler:</div>
+                                <div>• Spotify çalma listesi 'Deep Focus' öneriliyor.</div>
+                              </div>
+                            </div>
+                          )}
+
+                          {simPanelTab === 'spotify' && (
+                            <div className="space-y-3 pt-3">
+                              <div className="w-16 h-16 rounded-lg bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto shadow-inner">
+                                <Sparkles className="w-6 h-6 text-green-400 animate-pulse-glow" />
+                              </div>
+                              <div className="text-center">
+                                <div className="font-bold text-zinc-200 truncate">Cognitive Soundtrack</div>
+                                <div className="text-[10px] text-zinc-500">Synapse Audio Labs</div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                  <div className="h-full bg-green-500 transition-all" style={{ width: `${simSpotifyProgress}%` }} />
+                                </div>
+                                <div className="flex justify-between text-[9px] text-zinc-600">
+                                  <span>0:{simSpotifyProgress}</span>
+                                  <span>2:30</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-center gap-3">
+                                <button 
+                                  onClick={() => setSimSpotifyPlaying(!simSpotifyPlaying)}
+                                  className="w-8 h-8 rounded-full bg-green-500 hover:bg-green-400 text-zinc-950 flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                  {simSpotifyPlaying ? <Pause className="w-3.5 h-3.5 fill-zinc-950" /> : <Play className="w-3.5 h-3.5 fill-zinc-950 translate-x-0.5" />}
+                                </button>
+                                <button className="w-6 h-6 rounded-full bg-zinc-900 text-zinc-400 flex items-center justify-center border border-white/5 cursor-pointer">
+                                  <SkipForward className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {simPanelTab === 'night' && (
+                            <div className="space-y-2">
+                              <div className="text-purple-300 font-bold flex items-center gap-1.5"><Clock className="w-4 h-4 text-purple-400" /> Night Shift v2 Durumu</div>
+                              <div className="bg-zinc-950/50 p-2.5 rounded border border-white/5 text-[10px] space-y-1.5">
+                                <div className="flex justify-between"><span>Durum:</span><span className="text-green-400">BEKLEMEDE</span></div>
+                                <div className="flex justify-between"><span>Son Görev:</span><span className="text-zinc-400">Competitor Audit</span></div>
+                                <div className="flex justify-between"><span>Maliyet (BYOK):</span><span className="text-purple-400">~$0.002</span></div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </motion.div>
+                    )}
+
+                    {/* Floating suggestion FAB Widget */}
+                    {activeWidget === 'fab' && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 30 }} 
+                        animate={{ opacity: 1, scale: 1, y: 0 }} 
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="w-full max-w-sm mx-auto bg-zinc-950/90 border border-white/10 rounded-2xl shadow-2xl p-4 mt-20"
+                      >
+                        <div className="text-[10px] font-mono text-zinc-500 mb-2 border-b border-white/5 pb-1 flex items-center justify-between">
+                          <span>📋 Pano Algılandı (Clipboard Watch)</span>
+                          <span className="text-green-400 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" /> Live</span>
+                        </div>
+                        <div className="bg-zinc-900/60 p-2.5 rounded border border-white/5 font-mono text-[10px] text-zinc-400 truncate mb-4 select-text">
+                          def verify_ecdsa_license(key): # code copied
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button className="px-3 py-1.5 bg-purple-600/10 border border-purple-500/30 text-purple-300 text-[10px] font-mono rounded-lg hover:bg-purple-600/20 cursor-pointer flex items-center gap-1.5">
+                            <Code2 className="w-3.5 h-3.5" /> 🐛 Debug Code
+                          </button>
+                          <button className="px-3 py-1.5 bg-white/5 border border-white/10 text-zinc-300 text-[10px] font-mono rounded-lg hover:bg-white/10 cursor-pointer flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" /> 📖 Explain
+                          </button>
                         </div>
                       </motion.div>
                     )}
 
-                    {paletteResult === 'coder' && (
+                    {/* Proactive Notification Toast Widget */}
+                    {activeWidget === 'toast' && (
                       <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="space-y-4"
+                        initial={{ opacity: 0, x: -100, y: 50 }} 
+                        animate={{ opacity: 1, x: 0, y: 0 }} 
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute bottom-16 left-6 max-w-sm glass border border-purple-500/30 rounded-2xl shadow-2xl p-4 glow-purple-sm"
                       >
-                        <div className="flex items-center justify-between text-xs text-indigo-400 border-b border-white/5 pb-2">
-                          <span>🧠 Coder Specialist Active (Streaming Context Builder)</span>
-                          <span>TTFT: 240ms</span>
-                        </div>
-                        <div className="p-4 bg-zinc-950 border border-white/5 rounded-xl text-zinc-300 overflow-x-auto text-[11px] font-mono whitespace-pre-wrap select-text leading-relaxed">
-                          <span className="text-purple-400">from</span> core.cognitive.engine <span className="text-purple-400">import</span> CognitiveEngine
-                          <br /><span className="text-purple-400">from</span> core.observability.logger <span className="text-purple-400">import</span> get_logger
-                          <br /><br />log = get_logger(<span className="text-green-300">"coder_agent"</span>)
-                          <br /><br /><span className="text-blue-300">async def</span> <span className="text-yellow-300">generate_api_response</span>(context: dict) -&gt; dict:
-                          <br />&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-zinc-500"># Cognitive Fast Path check</span>
-                          <br />&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400">if</span> <span className="text-yellow-300">check_fast_path</span>(context[<span className="text-green-300">"prompt"</span>]):
-                          <br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;log.info(<span className="text-green-300">"Fast Path matched"</span>)
-                          <br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400">return</span> <span className="text-yellow-300">execute_fast_path</span>(context[<span className="text-green-300">"prompt"</span>])
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {paletteResult === 'window' && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="space-y-4"
-                      >
-                        <div className="flex items-center justify-between text-xs text-cyan-400 border-b border-white/5 pb-2">
-                          <span>⚡ Window Manager snap-left execution</span>
-                          <span>COMPLETED (0ms CPU)</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 h-32 items-center">
-                          <div className="h-full bg-cyan-500/10 border border-cyan-500/40 rounded-xl flex items-center justify-center font-bold text-cyan-300 shadow-inner glow-purple-sm">
-                            Active App (Left Grid Snap)
+                        <div className="flex items-start gap-3 font-mono text-[11px]">
+                          <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center shrink-0 glow-purple-sm">
+                            <Sparkles className="w-4 h-4 text-purple-400 animate-pulse-glow" />
                           </div>
-                          <div className="h-full bg-zinc-900/30 border border-white/5 rounded-xl flex items-center justify-center text-zinc-600">
-                            Desktop Grid Right
+                          <div className="space-y-1">
+                            <div className="font-bold text-zinc-200">Proaktif Bilişsel Öneri</div>
+                            <p className="text-zinc-500 text-[10px] leading-relaxed">
+                              Takvime göre 10 dakika sonra toplantınız başlıyor. Spotify ses düzeyini kısayım ve toplantı notlarını açayım mı?
+                            </p>
+                            <div className="flex gap-2 pt-1">
+                              <button className="px-2.5 py-1 bg-purple-600 text-white rounded text-[9px] font-bold cursor-pointer">Evet, Uygula</button>
+                              <button className="px-2.5 py-1 bg-white/5 border border-white/10 text-zinc-500 rounded text-[9px] hover:text-zinc-300 cursor-pointer">Yoksay</button>
+                            </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {paletteResult === 'calc' && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        className="space-y-4"
-                      >
-                        <div className="flex items-center justify-between text-xs text-pink-400 border-b border-white/5 pb-2">
-                          <span>⚡ Fast Path calculation (No LLM API cost, local asteval sandbox)</span>
-                          <span>LATENCY: 8ms</span>
-                        </div>
-                        <div className="p-4 bg-zinc-900/50 border border-white/5 rounded-xl flex items-center justify-between">
-                          <span className="text-zinc-500">Expression:</span>
-                          <span className="font-bold text-zinc-300 text-lg">256 * 4 / 2</span>
-                        </div>
-                        <div className="p-4 bg-pink-500/10 border border-pink-500/30 rounded-xl flex items-center justify-between glow-purple-sm">
-                          <span className="text-pink-400 font-bold">Result:</span>
-                          <span className="font-bold text-white text-xl">512</span>
                         </div>
                       </motion.div>
                     )}
@@ -594,18 +599,6 @@ export default function App() {
                   </AnimatePresence>
                 </div>
 
-                {/* Simulated metadata footer */}
-                <div className="bg-zinc-900/80 px-4 py-3 border-t border-white/5 flex items-center justify-between font-mono text-[10px] text-zinc-500 select-none">
-                  <div className="flex items-center gap-1.5">
-                    <HardDrive className="w-3.5 h-3.5" />
-                    <span>Turkish FTS5 SQLite active</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span>{t[lang].simLatency}: <strong className="text-purple-400">{paletteResult === 'coder' ? '240ms' : paletteResult === 'default' ? '-' : '< 15ms'}</strong></span>
-                    <span>OTA ECDSA active</span>
-                  </div>
-                </div>
-
               </FadeIn>
             </div>
 
@@ -614,306 +607,278 @@ export default function App() {
         </div>
       </section>
 
-      {/* The Legacy vs The Evolution */}
+      {/* Tech Architecture Visualizer Hub */}
       <section className="py-24 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            
-            {/* The Monolith (Legacy) */}
-            <div>
-              <FadeIn>
-                <h2 className="text-sm font-mono text-zinc-500 tracking-widest uppercase mb-4">v2.2.2 LEGACY AUDIT</h2>
-                <h3 className="text-4xl font-bold mb-6 text-zinc-400">{t[lang].archTitle}</h3>
-                <p className="text-zinc-500 text-base leading-relaxed mb-8">
-                  {t[lang].archDesc}
-                </p>
-              </FadeIn>
-
-              <FadeIn delay={0.2} className="glass p-6 rounded-2xl border-red-500/10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-5"><Layers className="w-32 h-32" /></div>
-                <div className="text-xs font-mono text-zinc-500 mb-4 font-bold tracking-widest text-red-400/60 uppercase">{t[lang].archLegacy}</div>
-                <div className="space-y-3 font-mono text-xs text-zinc-500 relative z-10">
-                  <div className="p-3 bg-zinc-900/80 rounded-xl border border-red-950/20 flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
-                    <span>{t[lang].archLegItem1}</span>
-                  </div>
-                  <div className="p-3 bg-zinc-900/80 rounded-xl border border-red-950/20 flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
-                    <span>{t[lang].archLegItem2}</span>
-                  </div>
-                  <div className="p-3 bg-zinc-900/80 rounded-xl border border-red-950/20 flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
-                    <span>{t[lang].archLegItem3}</span>
-                  </div>
-                </div>
-              </FadeIn>
-            </div>
-
-            {/* The Cognitive Engine (v3.0) */}
-            <div>
-              <FadeIn delay={0.3}>
-                <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">v3.0.0 COGNITIVE</h2>
-                <h3 className="text-4xl font-bold mb-6 text-white text-glow-purple">Engine Abstraction</h3>
-                <p className="text-zinc-400 text-base leading-relaxed mb-8">
-                  God classes were eliminated. ARIA v3 splits its brain into isolated threads. Fast Path bypasses heavy LLM calls completely, while the Context Engine feeds vector search models in parallel.
-                </p>
-              </FadeIn>
-
-              <FadeIn delay={0.5} className="gradient-border p-6 relative overflow-hidden glow-purple">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Zap className="w-32 h-32 text-purple-500" /></div>
-                <div className="text-xs font-mono text-zinc-300 mb-4 font-bold tracking-widest text-purple-400 uppercase">{t[lang].archNew}</div>
-                <div className="space-y-3 font-mono text-xs text-zinc-300 relative z-10">
-                  <div className="p-3 bg-purple-950/15 border border-purple-500/20 rounded-xl flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 mt-1.5 glow-purple-sm" />
-                    <span>{t[lang].archNewItem1}</span>
-                  </div>
-                  <div className="p-3 bg-purple-950/15 border border-purple-500/20 rounded-xl flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 mt-1.5 glow-purple-sm" />
-                    <span>{t[lang].archNewItem2}</span>
-                  </div>
-                  <div className="p-3 bg-purple-950/15 border border-purple-500/20 rounded-xl flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 mt-1.5 glow-purple-sm" />
-                    <span>{t[lang].archNewItem3}</span>
-                  </div>
-                </div>
-              </FadeIn>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* Onboarding Personas Hub */}
-      <section className="py-24 px-6 relative z-10 border-y border-white/5 bg-zinc-950/40">
         <div className="max-w-7xl mx-auto">
           
           <div className="text-center mb-16 max-w-4xl mx-auto">
             <FadeIn>
-              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].personaTitle}</h2>
-              <h3 className="text-4xl font-bold mb-6">Persona-Based System Optimization</h3>
-              <p className="text-zinc-400 text-lg leading-relaxed">
-                {t[lang].personaDesc}
+              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].archTitle}</h2>
+              <p className="text-zinc-400 text-base leading-relaxed">
+                {t[lang].archDesc}
               </p>
             </FadeIn>
           </div>
 
-          {/* Tab buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-            {[
-              { id: 'dev', label: '🧑‍💻 Developer', color: 'text-purple-400' },
-              { id: 'writer', label: '✍️ Writer / Editor', color: 'text-pink-400' },
-              { id: 'pro', label: '📊 Professional', color: 'text-cyan-400' },
-              { id: 'student', label: '🎓 Student / Researcher', color: 'text-indigo-400' }
-            ].map(tab => (
-              <button 
-                key={tab.id}
-                onClick={() => setActivePersona(tab.id)}
-                className={`px-5 py-3 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer ${activePersona === tab.id ? 'bg-purple-950/20 border-purple-500/40 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-500 hover:text-zinc-300'}`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Persona details */}
-          <div className="max-w-4xl mx-auto">
-            <AnimatePresence mode="wait">
-              {activePersona === 'dev' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 15 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  exit={{ opacity: 0, y: -15 }}
-                  className="glass p-8 rounded-2xl border-white/10 grid md:grid-cols-12 gap-8 items-center"
+          <div className="max-w-5xl mx-auto space-y-6">
+            
+            {/* Tab Header */}
+            <div className="flex items-center justify-center border-b border-white/5 text-xs font-mono text-zinc-500">
+              {[
+                { id: 'threading', label: t[lang].archTabThreading },
+                { id: 'memory', label: t[lang].archTabMemory },
+                { id: 'pkce', label: t[lang].archTabPkce }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveArchTab(tab.id)}
+                  className={`px-6 py-3 border-b-2 cursor-pointer transition-all ${activeArchTab === tab.id ? 'border-purple-500 text-purple-400 font-bold bg-purple-950/5' : 'border-transparent hover:text-zinc-300'}`}
                 >
-                  <div className="md:col-span-8 space-y-4">
-                    <h4 className="font-bold text-xl text-purple-400">Developer Cognitive Engine</h4>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
-                      Optimized for low-latency coding support, terminal command sandboxing, and index tracking of code repositories. Instantly hooks workspace files for local context builders.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 text-xs font-mono text-zinc-500">
-                      <div>🛠️ Shell Sandbox Gate</div>
-                      <div>📂 Workspace RAG Indexing</div>
-                      <div>💬 Alt+Space &gt; Coding Specialist</div>
-                      <div>🛡️ DPAPI Local Vault</div>
-                    </div>
-                  </div>
-                  <div className="md:col-span-4 bg-zinc-950 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-xs text-zinc-500">
-                    <div className="text-purple-400 font-bold">Fast-Keys Config:</div>
-                    <div>• Alt+Space &gt; open terminal</div>
-                    <div>• ;sign &gt; git signature</div>
-                    <div>• ;code &gt; auto-doc template</div>
-                  </div>
-                </motion.div>
-              )}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-              {activePersona === 'writer' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 15 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  exit={{ opacity: 0, y: -15 }}
-                  className="glass p-8 rounded-2xl border-white/10 grid md:grid-cols-12 gap-8 items-center"
-                >
-                  <div className="md:col-span-8 space-y-4">
-                    <h4 className="font-bold text-xl text-pink-400">Writer & Content Specialist</h4>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
-                      Tailored memory indexers prioritize document formats, copywriting templates, and contextual vocabulary. Integrates deeply with clipboard actions to suggest rewriting, summarizing, and translating text snippets instantly.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 text-xs font-mono text-zinc-500">
-                      <div>✍️ Snippets & Text Expander</div>
-                      <div>📚 Unlimited Episodic Memory</div>
-                      <div>🔗 Context-aware Clipboard FAB</div>
-                      <div>🌍 Native Localization Engine</div>
+            {/* Tab Body */}
+            <div className="glass p-6 md:p-8 rounded-2xl border-white/10 min-h-[300px] flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+                
+                {activeArchTab === 'threading' && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-center border-b border-white/5 pb-4 mb-4 gap-3">
+                      <div className="font-mono text-xs text-purple-300 font-bold">Cognitive Thread Scheduler Animation</div>
+                      <button 
+                        onClick={triggerThreadingSimulation}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-xs font-mono font-bold rounded-lg transition-all glow-purple-sm cursor-pointer"
+                      >
+                        Process Simulated Input
+                      </button>
                     </div>
-                  </div>
-                  <div className="md:col-span-4 bg-zinc-950 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-xs text-zinc-500">
-                    <div className="text-pink-400 font-bold">Fast-Keys Config:</div>
-                    <div>• ;mail &gt; standard signature</div>
-                    <div>• ;tarih &gt; dynamic date-time</div>
-                    <div>• ;blog &gt; post outline structure</div>
-                  </div>
-                </motion.div>
-              )}
 
-              {activePersona === 'pro' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 15 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  exit={{ opacity: 0, y: -15 }}
-                  className="glass p-8 rounded-2xl border-white/10 grid md:grid-cols-12 gap-8 items-center"
-                >
-                  <div className="md:col-span-8 space-y-4">
-                    <h4 className="font-bold text-xl text-cyan-400">Corporate & Professional Dashboard</h4>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
-                      Forces ARIA's background schedulers to prioritize calendar syncing, briefing alerts, and email summaries. Proactive rules automatically pause background Spotify queues when corporate meetings are about to start.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 text-xs font-mono text-zinc-500">
-                      <div>🌅 Automated Morning Briefing</div>
-                      <div>📅 Meeting Prep Notifications</div>
-                      <div>🎵 Spotify Premium Control</div>
-                      <div>🔒 Windows Credential Vault</div>
-                    </div>
-                  </div>
-                  <div className="md:col-span-4 bg-zinc-950 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-xs text-zinc-500">
-                    <div className="text-cyan-400 font-bold">Fast-Keys Config:</div>
-                    <div>• Alt+Space &gt; today's briefing</div>
-                    <div>• ;zoomin &gt; open meeting link</div>
-                    <div>• ;todo &gt; append custom task</div>
-                  </div>
-                </motion.div>
-              )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-[11px] text-center">
+                      <div className={`p-4 rounded-xl border transition-all ${threadingState === 'planning' ? 'bg-purple-950/20 border-purple-500 glow-purple-sm text-white' : 'bg-zinc-900/50 border-white/5 text-zinc-500'}`}>
+                        <div className="font-bold text-xs mb-1">1. Planner</div>
+                        <div>Complexity check</div>
+                      </div>
 
-              {activePersona === 'student' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 15 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  exit={{ opacity: 0, y: -15 }}
-                  className="glass p-8 rounded-2xl border-white/10 grid md:grid-cols-12 gap-8 items-center"
-                >
-                  <div className="md:col-span-8 space-y-4">
-                    <h4 className="font-bold text-xl text-indigo-400">Research & Academic Assistant</h4>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
-                      Optimizes FTS5 local search indices and FAISS cache weights for PDF search, book cataloging, and web-page indexing. Perfect for synthesizing broad topics, citing files, and cross-referencing notes.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 text-xs font-mono text-zinc-500">
-                      <div>🔍 Bounded Filesystem Scan</div>
-                      <div>🧠 Hybrid Memory (FAISS + FTS5)</div>
-                      <div>💻 Offline Local Ollama Support</div>
-                      <div>📋 Automatic Source Referencing</div>
+                      <div className={`p-4 rounded-xl border transition-all ${threadingState === 'parallel' ? 'bg-purple-950/20 border-purple-500 glow-purple-sm text-white' : 'bg-zinc-900/50 border-white/5 text-zinc-500'}`}>
+                        <div className="font-bold text-xs mb-1">2. Fast Path</div>
+                        <div>Non-LLM &lt;15ms check</div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border transition-all ${threadingState === 'parallel' ? 'bg-purple-950/20 border-purple-500 glow-purple-sm text-white' : 'bg-zinc-900/50 border-white/5 text-zinc-500'}`}>
+                        <div className="font-bold text-xs mb-1">3. Tool Executor</div>
+                        <div>Parallel sandbox running</div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border transition-all ${threadingState === 'complete' ? 'bg-green-950/20 border-green-500 glow-green-sm text-white' : 'bg-zinc-900/50 border-white/5 text-zinc-500'}`}>
+                        <div className="font-bold text-xs mb-1">4. Stream Coordinator</div>
+                        <div>Sentence TTS & UI dispatch</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="md:col-span-4 bg-zinc-950 p-4 rounded-xl border border-white/5 space-y-2 font-mono text-xs text-zinc-500">
-                    <div className="text-indigo-400 font-bold">Fast-Keys Config:</div>
-                    <div>• Alt+Space &gt; search files</div>
-                    <div>• ;cite &gt; paste last citation</div>
-                    <div>• ;note &gt; open scratch notes</div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+
+                {activeArchTab === 'memory' && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="grid md:grid-cols-2 gap-6 font-mono text-[11px]"
+                  >
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-white/5 space-y-3">
+                      <div className="text-purple-400 font-bold text-xs border-b border-white/5 pb-1">SQLite FTS5 (Turkish Tokenizer Fixed)</div>
+                      <div className="text-zinc-500 leading-relaxed select-text">
+                        CREATE VIRTUAL TABLE conversations USING fts5(
+                        <br />&nbsp;&nbsp;id,
+                        <br />&nbsp;&nbsp;timestamp,
+                        <br />&nbsp;&nbsp;role,
+                        <br />&nbsp;&nbsp;content,
+                        <br />&nbsp;&nbsp;tokenize="unicode61 remove_diacritics 1"
+                        <br />);
+                        <br /><br />
+                        <span className="text-green-400"># Türkçe aramalar sıfır kayıpla anında listelenir.</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-white/5 space-y-3">
+                      <div className="text-purple-400 font-bold text-xs border-b border-white/5 pb-1">FAISS Persistence System</div>
+                      <div className="text-zinc-500 leading-relaxed select-text">
+                        class EpisodicMemory:
+                        <br />&nbsp;&nbsp;def __init__(self):
+                        <br />&nbsp;&nbsp;&nbsp;&nbsp;self.cache_path = "episodic/faiss.bin"
+                        <br />&nbsp;&nbsp;&nbsp;&nbsp;self.index = self.load_disk_cache()
+                        <br /><br />
+                        <span className="text-green-400"># Cold-start indexing load falls from 5s to &lt;100ms.</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeArchTab === 'pkce' && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="space-y-4 font-mono text-xs text-zinc-400"
+                  >
+                    <div className="flex justify-between text-purple-400 font-bold border-b border-white/5 pb-2">
+                      <span>PKCE OAuth Handshake & Windows Credentials Sequence</span>
+                      <span>SECURED</span>
+                    </div>
+
+                    <div className="space-y-3 pt-2 text-[11px] leading-relaxed">
+                      <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> <strong>PKCE Generation:</strong> Generates code_verifier & challenge dynamically. No client_secret is exposed in the compiled binary.</div>
+                      <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> <strong>Auth callback redirect:</strong> Local HTTP server listens on port 57832. Automatically fetches the authorization code.</div>
+                      <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-purple-500" /> <strong>DPAPI CryptProtectData:</strong> Encrypts the returned OAuth tokens using standard Windows login credential hashes. Locked directly to user HWID.</div>
+                    </div>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+            </div>
+
           </div>
 
         </div>
       </section>
 
-      {/* Security & Privacy Hub */}
+      {/* Night Shift Live Console */}
+      <section className="py-24 px-6 relative z-10 border-t border-white/5 bg-zinc-950/20">
+        <div className="max-w-7xl mx-auto">
+          
+          <div className="grid lg:grid-cols-12 gap-12 items-center">
+            
+            <div className="lg:col-span-5 space-y-6">
+              <FadeIn>
+                <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center glow-purple-sm">
+                  <Terminal className="w-6 h-6 text-purple-400" />
+                </div>
+                <h3 className="text-4xl font-bold mb-4">{t[lang].consoleTitle}</h3>
+                <p className="text-zinc-400 text-base leading-relaxed">
+                  {t[lang].consoleDesc}
+                </p>
+                <button 
+                  onClick={runConsoleSimulation}
+                  disabled={isConsoleRunning}
+                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 disabled:from-zinc-900 disabled:to-zinc-900 disabled:text-zinc-600 hover:from-purple-500 hover:to-indigo-500 text-xs font-mono font-bold rounded-xl shadow-lg glow-purple-sm transition-all cursor-pointer flex items-center gap-2"
+                >
+                  {isConsoleRunning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                  {t[lang].startConsole}
+                </button>
+              </FadeIn>
+            </div>
+
+            {/* Live Terminal Log visualizer */}
+            <div className="lg:col-span-7">
+              <FadeIn delay={0.2} className="glass rounded-2xl border-white/10 overflow-hidden shadow-2xl relative">
+                
+                {/* Console header */}
+                <div className="bg-zinc-900/80 px-4 py-3 border-b border-white/5 flex items-center justify-between font-mono text-[10px] text-zinc-500">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
+                  </div>
+                  <span>Night Shift v2 Console Output</span>
+                  <span>APPDATA/logs/</span>
+                </div>
+
+                {/* Console screen logs */}
+                <div className="p-4 bg-zinc-950 min-h-[250px] font-mono text-[10px] text-zinc-500 leading-relaxed overflow-y-auto space-y-1.5 h-80">
+                  {consoleLogs.length === 0 ? (
+                    <div className="text-zinc-700 italic">&gt; Console idle. Waiting to trigger otonom job...</div>
+                  ) : (
+                    consoleLogs.map((log, index) => {
+                      const logObj = JSON.parse(log);
+                      const isErr = logObj.lvl === 'WARNING';
+                      const isSuccess = logObj.lvl === 'SUCCESS';
+                      return (
+                        <div key={index} className="flex gap-2 items-start border-b border-white/5 pb-1">
+                          <span className="text-zinc-700 shrink-0 select-none">[{logObj.t}]</span>
+                          <span className={`font-bold shrink-0 select-none ${isErr ? 'text-red-400' : isSuccess ? 'text-green-400' : 'text-purple-400'}`}>
+                            {logObj.lvl}
+                          </span>
+                          <span className="text-zinc-400 font-bold shrink-0 select-none">[{logObj.ev}]:</span>
+                          <span className="text-zinc-500 select-text">{logObj.job || logObj.detail || logObj.query || logObj.file || logObj.status}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+              </FadeIn>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* BYOK Savings Calculator */}
       <section className="py-24 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="text-center mb-16 max-w-4xl mx-auto">
+            <FadeIn>
+              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].calcTitle}</h2>
+              <p className="text-zinc-400 text-base leading-relaxed">
+                {t[lang].calcDesc}
+              </p>
+            </FadeIn>
+          </div>
+
+          <div className="max-w-4xl mx-auto glass p-8 rounded-2xl border-white/10 shadow-2xl space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5"><DollarSign className="w-48 h-48 text-purple-500" /></div>
             
-            <div className="space-y-6">
-              <FadeIn>
-                <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mb-6 glow-purple-sm">
-                  <Lock className="w-6 h-6 text-purple-400" />
-                </div>
-                <h3 className="text-4xl font-bold mb-4">{t[lang].privacyTitle}</h3>
-                <p className="text-zinc-400 text-base leading-relaxed">
-                  {t[lang].privacyDesc}
-                </p>
-              </FadeIn>
-
-              <div className="space-y-4">
-                <FadeIn delay={0.2} className="glass p-5 rounded-xl border-white/5 flex items-start gap-4">
-                  <Eye className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm text-zinc-200">{t[lang].privGate}</h4>
-                    <p className="text-xs text-zinc-500 mt-1">{t[lang].privGateDesc}</p>
-                  </div>
-                </FadeIn>
-
-                <FadeIn delay={0.3} className="glass p-5 rounded-xl border-purple-500/20 flex items-start gap-4 glow-purple-sm">
-                  <Key className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm text-zinc-200">{t[lang].privVault}</h4>
-                    <p className="text-xs text-zinc-500 mt-1">{t[lang].privVaultDesc}</p>
-                  </div>
-                </FadeIn>
+            {/* Input Slider */}
+            <div className="space-y-4 relative z-10">
+              <div className="flex justify-between items-center font-mono text-sm">
+                <span className="text-zinc-400 font-bold">{t[lang].dailyRequests}</span>
+                <span className="text-purple-400 font-extrabold text-lg">{apiRequests} Prompts/Day</span>
+              </div>
+              <input 
+                type="range" 
+                min="10" 
+                max="500" 
+                value={apiRequests}
+                onChange={(e) => setApiRequests(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+              <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+                <span>10 prompts (Light)</span>
+                <span>250 prompts (Average developer)</span>
+                <span>500 prompts (Extreme power-user)</span>
               </div>
             </div>
 
-            {/* Simulated Settings / Privacy GUI Mockup */}
-            <div className="relative">
-              <FadeIn delay={0.4} className="glass rounded-2xl border-white/10 overflow-hidden shadow-2xl">
-                <div className="bg-zinc-900/60 px-4 py-3 border-b border-white/5 flex items-center justify-between font-mono text-[10px] text-zinc-500">
-                  <span>ARIA — Settings & Privacy Center</span>
-                  <span className="text-green-500 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full" /> Locally Encrypted</span>
-                </div>
-                <div className="p-6 bg-zinc-950/40 space-y-5 text-xs font-mono">
-                  
-                  <div className="space-y-2">
-                    <div className="text-purple-400 font-bold uppercase tracking-wider text-[10px]">Permission Matrices</div>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center p-2.5 bg-zinc-900/50 rounded border border-white/5">
-                        <span>shell.execute (Komut Çalıştırma)</span>
-                        <span className="text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/5 text-[10px]">ASK EVERY TIME</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-zinc-900/50 rounded border border-white/5">
-                        <span>file.read (Dosya Okuma)</span>
-                        <span className="text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded bg-purple-500/5 text-[10px]">SESSION ONCE</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-zinc-900/50 rounded border border-white/5">
-                        <span>screen.capture (Ekran Görüntüsü)</span>
-                        <span className="text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/5 text-[10px]">ASK EVERY TIME</span>
-                      </div>
-                    </div>
-                  </div>
+            <hr className="border-white/5" />
 
-                  <div className="space-y-2">
-                    <div className="text-purple-400 font-bold uppercase tracking-wider text-[10px]">DPAPI Token Vault</div>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center p-2.5 bg-zinc-900/80 rounded border border-green-500/20">
-                        <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> Spotify OAuth Access Token</span>
-                        <span className="text-green-500 text-[10px]">SECURED IN WINDOWS CREDENTIALS</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-zinc-900/80 rounded border border-green-500/20">
-                        <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-green-500" /> OpenAI BYOK API Key</span>
-                        <span className="text-green-500 text-[10px]">LOCKED TO WINDOWS HWID</span>
-                      </div>
-                    </div>
-                  </div>
+            {/* Calculations outputs */}
+            <div className="grid sm:grid-cols-3 gap-6 font-mono text-center">
+              
+              <div className="p-4 bg-zinc-900/50 rounded-xl border border-white/5">
+                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">{t[lang].estCostChat}</div>
+                <div className="text-2xl font-extrabold text-zinc-400">${costs.standardCost}</div>
+              </div>
 
-                </div>
-              </FadeIn>
+              <div className="p-4 bg-zinc-900/50 rounded-xl border border-white/5">
+                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">{t[lang].estCostAria}</div>
+                <div className="text-2xl font-extrabold text-purple-400">${costs.ariaCost}</div>
+                <div className="text-[9px] text-zinc-600 mt-1">Includes $8 platform fee</div>
+              </div>
+
+              <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30 glow-purple-sm">
+                <div className="text-[10px] text-purple-400 uppercase font-bold tracking-wider mb-2">{t[lang].estSavings}</div>
+                <div className="text-2xl font-extrabold text-white text-glow-purple">${costs.savings}</div>
+                <div className="text-[9px] text-green-400 mt-1">Direct ROI Benefit</div>
+              </div>
+
             </div>
 
           </div>
@@ -921,126 +886,92 @@ export default function App() {
         </div>
       </section>
 
-      {/* Night Shift v2 Progress Board */}
+      {/* Bento Grid Matrix */}
       <section className="py-24 px-6 relative z-10 border-t border-white/5 bg-zinc-950/20">
         <div className="max-w-7xl mx-auto">
           
           <div className="text-center mb-16 max-w-4xl mx-auto">
             <FadeIn>
-              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].nightShiftTitle}</h2>
-              <p className="text-zinc-400 text-lg leading-relaxed">
-                {t[lang].nightShiftDesc}
+              <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].bentoTitle}</h2>
+              <p className="text-zinc-400 text-base leading-relaxed">
+                {t[lang].bentoDesc}
               </p>
             </FadeIn>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <FadeIn delay={0.2} className="glass p-6 md:p-8 rounded-2xl border-white/10 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-5"><RefreshCw className="w-48 h-48 text-purple-500 animate-spin" style={{ animationDuration: '40s' }} /></div>
-              
-              {/* Task Header */}
-              <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-white/5 pb-4 mb-6 gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center glow-purple-sm">
-                    <Clock className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm text-zinc-200">Task #412 — ARIA v3 Competitor Audit</h4>
-                    <p className="text-[10px] text-zinc-500 font-mono">Autonomous Execution • Scheduled at 03:00 AM</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-mono border border-green-500/30 px-3 py-1 rounded bg-green-500/10 text-green-400 w-fit shrink-0">COMPLETED & VERIFIED</span>
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            
+            {/* FTS5 Turkish */}
+            <FadeIn delay={0.1} className="glass p-6 rounded-2xl flex flex-col justify-between">
+              <div className="space-y-4">
+                <HardDrive className="w-8 h-8 text-purple-400" />
+                <h4 className="font-bold text-sm text-zinc-200">Turkish FTS5 Tokenizer Fix</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Resolves Turkish character indexing bugs natively (`remove_diacritics 1`), ensuring local sqlite search works seamlessly on all database columns.
+                </p>
               </div>
-
-              {/* Steps Progress */}
-              <div className="space-y-4 font-mono text-xs">
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 text-green-400" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-zinc-300">1. Expand & Plan Task</div>
-                    <div className="text-[10px] text-zinc-500">Decoupled Planner calculated O(n) execution path. Generated 4 sub-steps.</div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 text-green-400" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-zinc-300">2. Parallel Web Search & Scraping</div>
-                    <div className="text-[10px] text-zinc-500">Queried web indices for "personal ai os developments". Compiled 7 sources.</div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 text-green-400" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-zinc-300">3. Write Analysis to Workspace</div>
-                    <div className="text-[10px] text-zinc-500">File writer generated C:\Users\User\Documents\Reports\audit_results.md</div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 text-green-400" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-zinc-300">4. Final Verification Check</div>
-                    <div className="text-[10px] text-zinc-500">Decoupled verification script verified file hash integrity. Completed.</div>
-                  </div>
-                </div>
-
-              </div>
-
+              <span className="text-[9px] font-mono opacity-50 bg-zinc-900 px-2 py-0.5 rounded border border-white/10 w-fit mt-4">SQLite virtual table</span>
             </FadeIn>
+
+            {/* Bounded scan fallback */}
+            <FadeIn delay={0.2} className="glass p-6 rounded-2xl flex flex-col justify-between">
+              <div className="space-y-4">
+                <Workflow className="w-8 h-8 text-purple-400" />
+                <h4 className="font-bold text-sm text-zinc-200">4-Layer File Search Fallback</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Queries Windows Indexing &rarr; Everything SDK &rarr; Local Workspace DB &rarr; Bounded Filesystem Scan. Fails gracefully in under 50ms.
+                </p>
+              </div>
+              <span className="text-[9px] font-mono opacity-50 bg-zinc-900 px-2 py-0.5 rounded border border-white/10 w-fit mt-4">File systems</span>
+            </FadeIn>
+
+            {/* Acoustic Waves */}
+            <FadeIn delay={0.3} className="glass p-6 rounded-2xl border-purple-500/20 flex flex-col justify-between glow-purple-sm">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Volume2 className="w-8 h-8 text-purple-400" />
+                  <div className="flex gap-0.5 h-6 items-center select-none">
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                    <span className="soundwave-bar" />
+                  </div>
+                </div>
+                <h4 className="font-bold text-sm text-zinc-200">Sentence-by-Sentence TTS</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Synchronizes Neural Text-to-Speech audio waves dynamically as text tokens are streamed to the layout, avoiding traditional generation lag.
+                </p>
+              </div>
+              <span className="text-[9px] font-mono text-purple-400 bg-purple-500/5 px-2 py-0.5 rounded border border-purple-500/20 w-fit mt-4">Acoustic Engine</span>
+            </FadeIn>
+
           </div>
 
         </div>
       </section>
 
-      {/* Commercial Subscription Pricing Grid */}
+      {/* Pricing Matrix */}
       <section className="py-24 px-6 relative z-10 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
           
           <div className="text-center mb-16 max-w-4xl mx-auto">
             <FadeIn>
               <h2 className="text-sm font-mono text-purple-400 tracking-widest uppercase mb-4">{t[lang].pricingTitle}</h2>
-              <p className="text-zinc-400 text-lg leading-relaxed">
+              <p className="text-zinc-400 text-base leading-relaxed">
                 {t[lang].pricingDesc}
               </p>
             </FadeIn>
           </div>
 
-          {/* BYOK Spotlight banner */}
-          <FadeIn delay={0.1} className="max-w-4xl mx-auto mb-16">
-            <div className="gradient-border p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 glow-purple">
-              <div className="absolute top-0 right-0 p-4 opacity-5"><Cpu className="w-32 h-32 text-purple-500" /></div>
-              <div className="space-y-2 text-center md:text-left relative z-10">
-                <h4 className="font-bold text-lg text-purple-300 flex items-center justify-center md:justify-start gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-400 animate-pulse-glow" />
-                  {t[lang].pricingBYOK}
-                </h4>
-                <p className="text-xs text-zinc-400 leading-relaxed max-w-xl">
-                  {t[lang].pricingBYOKDesc}
-                </p>
-              </div>
-              <span className="text-xs font-mono bg-purple-600 px-4 py-2 rounded-xl text-white font-bold shrink-0 shadow-lg glow-purple-sm">UNLIMITED BYOK / OLLAMA</span>
-            </div>
-          </FadeIn>
-
-          {/* Pricing cards */}
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             
-            {/* Free Tier */}
-            <FadeIn delay={0.2} className="glass p-8 rounded-2xl border-white/5 flex flex-col justify-between h-full relative">
+            {/* Free */}
+            <FadeIn delay={0.1} className="glass p-8 rounded-2xl border-white/5 flex flex-col justify-between h-full relative">
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-mono text-zinc-500 text-sm font-bold tracking-widest uppercase">{t[lang].freeTier}</h4>
+                  <h4 className="font-mono text-zinc-500 text-xs font-bold tracking-widest uppercase">{t[lang].freeTier}</h4>
                   <div className="text-4xl font-extrabold mt-3">$0</div>
                   <div className="text-[10px] text-zinc-500 mt-1">Start instantly, no credit card required</div>
                 </div>
@@ -1048,80 +979,92 @@ export default function App() {
                 <hr className="border-white/5" />
 
                 <div className="space-y-3 text-xs text-zinc-400 font-mono">
-                  <div className="font-bold text-zinc-300 text-[10px] uppercase tracking-wider">{t[lang].freeLimit}</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> 30 Daily AI Messages (Cloud)</div>
+                  <div className="font-bold text-zinc-300 text-[10px] uppercase tracking-wider">Features Included:</div>
+                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> 30 Daily AI messages (Cloud)</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Unlimited BYOK Messages</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Unlimited Local Ollama</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> App Launcher & File Search</div>
-                  <div className="flex items-center gap-2 text-zinc-600"><AlertTriangle className="w-4 h-4 text-zinc-800" /> 7-Day Context Memory Only</div>
-                  <div className="flex items-center gap-2 text-zinc-600"><AlertTriangle className="w-4 h-4 text-zinc-800" /> Basic Permission Gate</div>
+                  <div className="flex items-center gap-2 text-zinc-600"><AlertTriangle className="w-4 h-4 text-zinc-800" /> 7-Day Context Memory Depth</div>
                 </div>
               </div>
 
               <button 
-                onClick={() => setShowLicenseModal(true)}
-                className="mt-8 w-full py-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold transition-all text-xs font-mono border border-white/5 cursor-pointer"
+                onClick={() => {
+                  setWizardStep(4);
+                  setWizardLicenseStatus('idle');
+                  setWizardLicenseKey('');
+                  setShowWizard(true);
+                }}
+                className="mt-8 w-full py-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold transition-all text-xs font-mono border border-white/5 cursor-pointer text-center"
               >
                 Start Free Trial
               </button>
             </FadeIn>
 
-            {/* Pro Tier */}
-            <FadeIn delay={0.3} className="glass p-8 rounded-2xl border-purple-500/30 flex flex-col justify-between h-full relative glow-purple shadow-xl">
+            {/* Pro */}
+            <FadeIn delay={0.2} className="glass p-8 rounded-2xl border-purple-500/30 flex flex-col justify-between h-full relative glow-purple shadow-xl">
               <div className="absolute top-0 right-8 -translate-y-1/2 bg-purple-600 px-3 py-1 rounded-full text-[9px] font-mono font-bold tracking-widest text-white uppercase shadow-md glow-purple-sm">POPULAR</div>
               
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-mono text-purple-400 text-sm font-bold tracking-widest uppercase">{t[lang].proTier}</h4>
+                  <h4 className="font-mono text-purple-400 text-xs font-bold tracking-widest uppercase">{t[lang].proTier}</h4>
                   <div className="text-4xl font-extrabold mt-3">$8<span className="text-sm font-light text-zinc-500">/mo</span></div>
-                  <div className="text-[10px] text-zinc-500 mt-1">Unlock deep persistent memory as a value layer</div>
+                  <div className="text-[10px] text-zinc-500 mt-1">Unlock deep persistent memory value layer</div>
                 </div>
 
                 <hr className="border-white/5" />
 
                 <div className="space-y-3 text-xs text-zinc-300 font-mono">
-                  <div className="font-bold text-purple-400 text-[10px] uppercase tracking-wider">{t[lang].proLimit}</div>
+                  <div className="font-bold text-purple-400 text-[10px] uppercase tracking-wider">Features Included:</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Unlimited BYOK & Ollama</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> ~500 Cloud AI Credits/mo</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> 1-Year Persistent Context</div>
+                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> ~500 Cloud AI requests/mo</div>
+                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> 1-Year Persistent Memory</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Full Proactive Suggestion Engine</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Unlimited Night Shift Tasks</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Secure Cross-Device Sync</div>
                 </div>
               </div>
 
               <button 
-                onClick={() => setShowLicenseModal(true)}
-                className="mt-8 w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold transition-all text-xs font-mono shadow-md glow-purple-sm cursor-pointer"
+                onClick={() => {
+                  setWizardStep(4);
+                  setWizardLicenseStatus('idle');
+                  setWizardLicenseKey('');
+                  setShowWizard(true);
+                }}
+                className="mt-8 w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold transition-all text-xs font-mono shadow-md glow-purple-sm cursor-pointer text-center"
               >
                 Get Pro License
               </button>
             </FadeIn>
 
-            {/* Team Tier */}
-            <FadeIn delay={0.4} className="glass p-8 rounded-2xl border-white/5 flex flex-col justify-between h-full relative">
+            {/* Team */}
+            <FadeIn delay={0.3} className="glass p-8 rounded-2xl border-white/5 flex flex-col justify-between h-full relative">
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-mono text-zinc-500 text-sm font-bold tracking-widest uppercase">{t[lang].teamTier}</h4>
+                  <h4 className="font-mono text-zinc-500 text-xs font-bold tracking-widest uppercase">{t[lang].teamTier}</h4>
                   <div className="text-4xl font-extrabold mt-3">$15<span className="text-sm font-light text-zinc-500">/user/mo</span></div>
-                  <div className="text-[10px] text-zinc-500 mt-1">Minimum 3 users, enterprise integrations</div>
+                  <div className="text-[10px] text-zinc-500 mt-1">Minimum 3 users, collaborative modules</div>
                 </div>
 
                 <hr className="border-white/5" />
 
                 <div className="space-y-3 text-xs text-zinc-400 font-mono">
-                  <div className="font-bold text-zinc-300 text-[10px] uppercase tracking-wider">{t[lang].teamLimit}</div>
+                  <div className="font-bold text-zinc-300 text-[10px] uppercase tracking-wider">Features Included:</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Everything in Pro Tier</div>
                   <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Shared Team Context Space</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Collaborative Skill Library</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Corporate SLA 4h Support</div>
-                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Team Administration Dashboard</div>
+                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Shared Skill Libraries</div>
+                  <div className="flex items-center gap-2"><Check className="w-4 h-4 text-purple-400" /> Corporate SLA Support</div>
                 </div>
               </div>
 
               <button 
-                onClick={() => setShowLicenseModal(true)}
-                className="mt-8 w-full py-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold transition-all text-xs font-mono border border-white/5 cursor-pointer"
+                onClick={() => {
+                  setWizardStep(4);
+                  setWizardLicenseStatus('idle');
+                  setWizardLicenseKey('');
+                  setShowWizard(true);
+                }}
+                className="mt-8 w-full py-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold transition-all text-xs font-mono border border-white/5 cursor-pointer text-center"
               >
                 Contact Enterprise
               </button>
@@ -1137,22 +1080,23 @@ export default function App() {
         <div className="max-w-4xl mx-auto text-center">
           <FadeIn>
             <div className="w-20 h-20 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mx-auto mb-8 glow-purple-sm">
-              <Code2 className="w-10 h-10 text-purple-400 animate-pulse-glow" />
+              <Cpu className="w-10 h-10 text-purple-400 animate-pulse-glow" />
             </div>
             <h2 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">Alt + Space.</h2>
             <p className="text-xl text-zinc-400 mb-12 max-w-2xl mx-auto">
-              Whisper your intent. Let the cognitive engines orchestrate your desktop securely.
+              Whisper your intent. Let the decoupled cognitive engines manage your desktop securely.
             </p>
             
             <button 
               onClick={() => {
-                setLicenseKey('');
-                setLicenseStatus('idle');
-                setShowLicenseModal(true);
+                setWizardStep(1);
+                setWizardLicenseStatus('idle');
+                setWizardLicenseKey('');
+                setShowWizard(true);
               }}
               className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold transition-all duration-300 hover:scale-105 hover:glow-purple shadow-xl glow-purple-sm cursor-pointer"
             >
-              Start Free Trial Now
+              Start Onboarding Wizard
               <MoveRight className="w-5 h-5" />
             </button>
           </FadeIn>
@@ -1163,14 +1107,14 @@ export default function App() {
         <p>© 2026 Synapse Labs. All rights reserved. ARIA and its cognitive systems are commercial trade secrets protected by native hardware licensing.</p>
       </footer>
 
-      {/* Activation / Pricing Mock Modal */}
+      {/* Interactive Onboarding Wizard / License Activation Modal */}
       <AnimatePresence>
-        {showLicenseModal && (
+        {showWizard && (
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 15 }} 
@@ -1179,90 +1123,208 @@ export default function App() {
               className="glass max-w-lg w-full rounded-2xl border-white/10 overflow-hidden glow-purple shadow-2xl relative"
             >
               
-              {/* Modal header */}
-              <div className="bg-zinc-900/80 px-5 py-4 border-b border-white/5 flex items-center justify-between">
-                <span className="font-bold text-sm text-zinc-200">{t[lang].licenseModalTitle}</span>
+              {/* Modal Header */}
+              <div className="bg-zinc-900/80 px-5 py-4 border-b border-white/5 flex items-center justify-between font-mono">
+                <span className="font-bold text-sm text-zinc-200">{t[lang].wizardTitle}</span>
                 <button 
-                  onClick={() => setShowLicenseModal(false)}
-                  className="text-zinc-500 hover:text-white transition-all text-xs font-mono cursor-pointer"
+                  onClick={() => setShowWizard(false)}
+                  className="text-zinc-500 hover:text-white transition-all text-xs cursor-pointer"
                 >
                   [CLOSE]
                 </button>
               </div>
 
-              {/* Modal body */}
-              <div className="p-6 space-y-5">
-                <p className="text-xs text-zinc-400 leading-relaxed font-mono">
-                  {t[lang].licenseModalDesc}
-                </p>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500">
-                    <span>LICENSE_KEY_INPUT</span>
-                    <button 
-                      onClick={() => setLicenseKey('ARIA-V3-PRO-KEY')}
-                      className="text-purple-400 hover:underline cursor-pointer"
-                    >
-                      {t[lang].licenseMockBtn}
-                    </button>
+              {/* Progress Indicator */}
+              <div className="grid grid-cols-4 bg-zinc-950/60 text-[9px] font-mono text-zinc-500 text-center border-b border-white/5">
+                {[
+                  { step: 1, label: '1. LOCALE' },
+                  { step: 2, label: '2. PERSONA' },
+                  { step: 3, label: '3. PRIVACY' },
+                  { step: 4, label: '4. LICENSE' }
+                ].map(item => (
+                  <div 
+                    key={item.step}
+                    className={`py-2 ${wizardStep === item.step ? 'bg-purple-950/20 text-purple-400 font-bold border-b border-purple-500' : ''}`}
+                  >
+                    {item.label}
                   </div>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={licenseKey}
-                      onChange={(e) => setLicenseKey(e.target.value)}
-                      placeholder="XXXX-XXXX-XXXX-XXXX"
-                      className="w-full bg-zinc-950/60 border border-white/10 rounded-xl px-4 py-3 outline-none text-sm font-mono text-zinc-100 placeholder:text-zinc-700 focus:border-purple-500/50"
-                    />
-                  </div>
-                </div>
+                ))}
+              </div>
 
+              {/* Modal Body */}
+              <div className="p-6 min-h-[250px] flex flex-col justify-between">
+                
                 <AnimatePresence mode="wait">
-                  {licenseStatus === 'checking' && (
+                  
+                  {/* Step 1: Locale Selection */}
+                  {wizardStep === 1 && (
                     <motion.div 
-                      initial={{ opacity: 0, y: 5 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      exit={{ opacity: 0 }}
-                      className="p-3 bg-purple-500/5 border border-purple-500/20 text-purple-400 text-xs font-mono rounded-xl flex items-center gap-2 justify-center"
+                      key="step1"
+                      initial={{ opacity: 0, x: 15 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      exit={{ opacity: 0, x: -15 }}
+                      className="space-y-4"
                     >
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Performing ECDSA cryptographical signature validation check...
+                      <div className="text-xs font-mono text-zinc-400">Choose your system language for ARIA prompt parameters & UI localization:</div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => setWizardLang('TR')}
+                          className={`p-4 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${wizardLang === 'TR' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                          🇹🇷 Türkçe (Turkish)
+                        </button>
+                        <button 
+                          onClick={() => setWizardLang('EN')}
+                          className={`p-4 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${wizardLang === 'EN' ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                          🇺🇸 English (US)
+                        </button>
+                      </div>
                     </motion.div>
                   )}
 
-                  {licenseStatus === 'success' && (
+                  {/* Step 2: Persona Picker */}
+                  {wizardStep === 2 && (
                     <motion.div 
-                      initial={{ opacity: 0, y: 5 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      exit={{ opacity: 0 }}
-                      className="p-4 bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-mono rounded-xl flex items-start gap-2.5 shadow-inner"
+                      key="step2"
+                      initial={{ opacity: 0, x: 15 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      exit={{ opacity: 0, x: -15 }}
+                      className="space-y-3"
                     >
-                      <Check className="w-5 h-5 shrink-0" />
-                      <span>{t[lang].licenseSuccessMsg}</span>
+                      <div className="text-xs font-mono text-zinc-400">Select your professional profile to optimize cognitive context structures:</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { id: 'developer', label: '🧑‍💻 Developer', desc: 'Low-latency code & shell integration' },
+                          { id: 'writer', label: '✍️ Writer', desc: 'Snippets & text rewriting priority' },
+                          { id: 'pro', label: '📊 Professional', desc: 'Briefings & calendar triggers' },
+                          { id: 'student', label: '🎓 Student', desc: 'FAISS research & filesystem indexing' }
+                        ].map(persona => (
+                          <button
+                            key={persona.id}
+                            onClick={() => setWizardPersona(persona.id)}
+                            className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${wizardPersona === persona.id ? 'bg-purple-950/20 border-purple-500/50 text-white glow-purple-sm' : 'bg-zinc-900/50 border-white/5 text-zinc-500 hover:bg-zinc-900'}`}
+                          >
+                            <div className="font-mono text-xs font-bold text-zinc-200">{persona.label}</div>
+                            <div className="text-[9px] text-zinc-500 mt-1 leading-tight">{persona.desc}</div>
+                          </button>
+                        ))}
+                      </div>
                     </motion.div>
                   )}
 
-                  {licenseStatus === 'error' && (
+                  {/* Step 3: Consent Manager */}
+                  {wizardStep === 3 && (
                     <motion.div 
-                      initial={{ opacity: 0, y: 5 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      exit={{ opacity: 0 }}
-                      className="p-3 bg-red-500/5 border border-red-500/20 text-red-400 text-xs font-mono rounded-xl flex items-center gap-2 justify-center"
+                      key="step3"
+                      initial={{ opacity: 0, x: 15 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      exit={{ opacity: 0, x: -15 }}
+                      className="space-y-3 font-mono text-xs text-zinc-400"
                     >
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      {t[lang].licenseErrorMsg}
+                      <div className="border-b border-white/5 pb-2 mb-2 font-bold text-purple-400">Opt-in Proactive Privacy settings (Local processing only):</div>
+                      {[
+                        { id: 'clipboard', label: 'Monitor Pano (Clipboard monitor)' },
+                        { id: 'active_window', label: 'Active Window Tracking (Toplantı takibi)' },
+                        { id: 'file_repeats', label: 'File repeat alerts (Sık açılan dosyalar)' },
+                        { id: 'spotify', label: 'Pause Spotify on incoming meetings' }
+                      ].map(item => (
+                        <div key={item.id} className="flex justify-between items-center p-2.5 bg-zinc-900/50 rounded border border-white/5">
+                          <span>{item.label}</span>
+                          <input 
+                            type="checkbox" 
+                            checked={wizardConsents[item.id]} 
+                            onChange={() => setWizardConsents(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                            className="w-4 h-4 cursor-pointer accent-purple-500"
+                          />
+                        </div>
+                      ))}
                     </motion.div>
                   )}
+
+                  {/* Step 4: License Verification */}
+                  {wizardStep === 4 && (
+                    <motion.div 
+                      key="step4"
+                      initial={{ opacity: 0, x: 15 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      exit={{ opacity: 0, x: -15 }}
+                      className="space-y-4 font-mono text-xs text-zinc-400"
+                    >
+                      <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                        <span>ECDSA Cryptographic Key Check</span>
+                        <button 
+                          onClick={() => setWizardLicenseKey('ARIA-V3-PRO-KEY')}
+                          className="text-purple-400 hover:underline cursor-pointer"
+                        >
+                          Load Sample Pro Key
+                        </button>
+                      </div>
+                      
+                      <input 
+                        type="text" 
+                        value={wizardLicenseKey}
+                        onChange={(e) => setWizardLicenseKey(e.target.value)}
+                        placeholder="XXXX-XXXX-XXXX-XXXX"
+                        className="w-full bg-zinc-950/60 border border-white/10 rounded-xl px-4 py-3 outline-none text-zinc-100 placeholder:text-zinc-700 text-center tracking-widest text-sm focus:border-purple-500/50"
+                      />
+
+                      <AnimatePresence mode="wait">
+                        {wizardLicenseStatus === 'loading' && (
+                          <motion.div className="p-3 bg-purple-500/5 border border-purple-500/20 text-purple-400 rounded-xl flex items-center gap-2 justify-center text-[10px]">
+                            <RefreshCw className="w-4 h-4 animate-spin" /> Verifying ECDSA credentials check...
+                          </motion.div>
+                        )}
+
+                        {wizardLicenseStatus === 'success' && (
+                          <motion.div className="p-3 bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl flex items-start gap-2.5 shadow-inner text-[10px]">
+                            <Check className="w-4 h-4 shrink-0 mt-0.5" />
+                            <span>License Verified! Your ARIA v3 Pro features are unlocked locally. Ready to Alt+Space!</span>
+                          </motion.div>
+                        )}
+
+                        {wizardLicenseStatus === 'error' && (
+                          <motion.div className="p-3 bg-red-500/5 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2 justify-center text-[10px]">
+                            <AlertTriangle className="w-4 h-4" /> Error: Invalid license signature check failed.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <button 
+                        onClick={handleVerifyLicense}
+                        disabled={!wizardLicenseKey.trim() || wizardLicenseStatus === 'loading' || wizardLicenseStatus === 'success'}
+                        className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 disabled:from-zinc-900 disabled:to-zinc-900 disabled:text-zinc-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg glow-purple-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <Key className="w-4 h-4" /> Verify License
+                      </button>
+                    </motion.div>
+                  )}
+
                 </AnimatePresence>
 
-                <button 
-                  onClick={handleVerifyLicense}
-                  disabled={!licenseKey.trim() || licenseStatus === 'checking' || licenseStatus === 'success'}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-zinc-900 disabled:to-zinc-900 disabled:text-zinc-600 font-bold transition-all text-xs font-mono shadow-md glow-purple-sm cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Key className="w-4 h-4" />
-                  {t[lang].licenseVerifyBtn}
-                </button>
+                {/* Wizard Navigation Footer */}
+                <div className="flex justify-between items-center border-t border-white/5 pt-4 mt-6">
+                  <button
+                    disabled={wizardStep === 1}
+                    onClick={() => setWizardStep(s => Math.max(1, s - 1))}
+                    className="px-4 py-2 rounded border border-white/5 bg-zinc-900/40 text-zinc-400 disabled:opacity-30 text-[10px] font-mono cursor-pointer"
+                  >
+                    BACK
+                  </button>
+                  <button
+                    disabled={wizardStep === 4 && wizardLicenseStatus !== 'success'}
+                    onClick={() => {
+                      if (wizardStep === 4) {
+                        setShowWizard(false);
+                      } else {
+                        setWizardStep(s => Math.min(4, s + 1));
+                      }
+                    }}
+                    className="px-4 py-2 rounded bg-purple-600 text-white text-[10px] font-mono font-bold shadow glow-purple-sm hover:bg-purple-500 disabled:opacity-30 cursor-pointer"
+                  >
+                    {wizardStep === 4 ? 'CLOSE WIZARD' : 'CONTINUE'}
+                  </button>
+                </div>
 
               </div>
 
